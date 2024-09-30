@@ -18,6 +18,7 @@ const config = {
     },
   },
   scene: [Level],
+  backgroundColor: "#54e5a7",
 };
 
 const game = new Phaser.Game(config);
