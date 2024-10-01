@@ -10,7 +10,7 @@ export default class Ennemy1 extends Phaser.Physics.Arcade.Sprite {
     this.damage = 2;
     this.health = 7;
 
-    this.speed = 100;
+    this.speed = 150;
   }
 
   update(player) {
@@ -27,5 +27,9 @@ export default class Ennemy1 extends Phaser.Physics.Arcade.Sprite {
     if (distance > 10) {
       this.scene.physics.moveTo(this, player.x, player.y, this.speed);
     }
+  }
+
+  dead() {
+    this.destroy();
   }
 }

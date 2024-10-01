@@ -7,13 +7,15 @@ export default class Ennemy2 extends Phaser.Physics.Arcade.Sprite {
     this.setCollideWorldBounds(true);
     this.setScale(0.08); // ! À CHANGER
 
-    this.damage = 6;
-    this.health = 9;
+    this.damage = 2;
+    this.health = 7;
 
-    this.speed = 25;
-    this.shootDelay = 5000;
+    this.speed = 50;
+    this.shootDelay = 3000;
     this.canShoot = true;
     this.projectileSpeed = 75;
+    this.burstCount = 3;
+    this.burstDelay = 500;
   }
 
   update(player) {
@@ -27,9 +29,9 @@ export default class Ennemy2 extends Phaser.Physics.Arcade.Sprite {
       player.y
     );
     // Se déplacer vers le joueur
-    if (distance > 350) {
+    if (distance > 250) {
       this.scene.physics.moveTo(this, player.x, player.y, this.speed);
-    } else if (distance < 300) {
+    } else if (distance < 200) {
       this.scene.physics.moveTo(this, player.x, player.y, -this.speed);
     } else {
       this.scene.physics.moveTo(this, player.x, player.y, 0);
@@ -49,26 +51,38 @@ export default class Ennemy2 extends Phaser.Physics.Arcade.Sprite {
           this.canShoot = true;
         },
       });
-      // Créer un projectile
-      const projectile = this.scene.projectiles.create(
-        this.x,
-        this.y,
-        "projectile"
-      );
-      projectile.setScale(0.1);
-      const angle = Phaser.Math.Angle.Between(
-        this.x,
-        this.y,
-        player.x,
-        player.y
-      );
-      this.scene.physics.velocityFromRotation(
-        angle,
-        this.projectileSpeed,
-        projectile.body.velocity
-      );
-      projectile.angle = Phaser.Math.RadToDeg(angle);
-      projectile.damage = this.damage;
+
+      // Tirer une rafale de projectiles
+      for (let i = 0; i < this.burstCount; i++) {
+        this.scene.time.addEvent({
+          delay: i * this.burstDelay,
+          callback: () => {
+            // Vérifier si l'ennemi existe toujours
+            if (!this.scene || !this.active) return;
+
+            // Créer un projectile
+            const projectile = this.scene.projectiles.create(
+              this.x,
+              this.y,
+              "projectile"
+            );
+            projectile.setScale(0.05);
+            const angle = Phaser.Math.Angle.Between(
+              this.x,
+              this.y,
+              player.x,
+              player.y
+            );
+            this.scene.physics.velocityFromRotation(
+              angle,
+              this.projectileSpeed,
+              projectile.body.velocity
+            );
+            projectile.angle = Phaser.Math.RadToDeg(angle);
+            projectile.damage = this.damage;
+          },
+        });
+      }
     }
   }
 

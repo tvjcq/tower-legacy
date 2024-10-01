@@ -1,3 +1,5 @@
+import Ennemy4 from "../objects/ennemy4.js";
+
 export default class Player extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y, texture) {
     super(scene, x, y, texture);
@@ -16,6 +18,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     this.attackCone = this.scene.add.graphics({
       fillStyle: { color: 0xff0000, alpha: 0.5 },
+      lineStyle: { width: 2, color: 0xff0000 },
     });
     this.canAttack = true;
     this.attackDelay = 1000;
@@ -67,12 +70,17 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.setVelocityX(velocityX);
     this.setVelocityY(velocityY);
 
+    this.updateAttackCone(this.angle);
+
     if (pointer.isDown) {
       this.Attack();
     }
 
     this.scene.physics.overlap(this, this.scene.ennemies, (player, ennemy) => {
-      this.takeDamage(ennemy.damage);
+      if (!(ennemy instanceof Ennemy4)) {
+        // Ignorer les dégâts de l'ennemi 4
+        this.takeDamage(ennemy.damage);
+      }
     });
 
     this.scene.physics.overlap(
@@ -110,15 +118,20 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     // Dessiner le cône d'attaque
-    this.attackCone.fillPoints(points, true);
+    this.attackCone.strokePoints(points, true);
   }
 
   Attack() {
     if (!this.canAttack) return;
     this.canAttack = false;
-    this.updateAttackCone(this.angle);
-    this.scene.time.delayedCall(this.attackDuration, () => {
-      this.attackCone.clear();
+    this.scene.tweens.add({
+      targets: this.attackCone,
+      alpha: { from: 1, to: 0 },
+      duration: this.attackDuration,
+      onComplete: () => {
+        this.attackCone.clear();
+        this.attackCone.alpha = 1; // Réinitialiser l'alpha pour la prochaine attaque
+      },
     });
     this.scene.time.delayedCall(this.attackDelay, () => {
       this.canAttack = true;
@@ -146,7 +159,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       ) {
         enemy.health -= this.damage;
         if (enemy.health <= 0) {
-          enemy.destroy();
+          enemy.dead();
         }
       }
     });
