@@ -9,6 +9,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     this.damage = 5;
     this.health = 10;
+    this.speed = 250;
 
     this.whipAngle = 60;
     this.whipLength = 200;
@@ -19,6 +20,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.canAttack = true;
     this.attackDelay = 1000;
     this.attackDuration = 200;
+    this.invincible = false;
   }
 
   update(cursors, pointer) {
@@ -29,16 +31,16 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (cursors.left.isDown && cursors.right.isDown) {
       velocityX = 0;
     } else if (cursors.left.isDown) {
-      velocityX = -250;
+      velocityX = -this.speed;
     } else if (cursors.right.isDown) {
-      velocityX = 250;
+      velocityX = this.speed;
     }
     if (cursors.up.isDown && cursors.down.isDown) {
       velocityY = 0;
     } else if (cursors.up.isDown) {
-      velocityY = -250;
+      velocityY = -this.speed;
     } else if (cursors.down.isDown) {
-      velocityY = 250;
+      velocityY = this.speed;
     }
 
     // Normaliser la vitesse en diagonale
@@ -68,6 +70,19 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (pointer.isDown) {
       this.Attack();
     }
+
+    this.scene.physics.overlap(this, this.scene.ennemies, (player, ennemy) => {
+      this.takeDamage(ennemy.damage);
+    });
+
+    this.scene.physics.overlap(
+      this,
+      this.scene.projectiles,
+      (player, projectile) => {
+        this.takeDamage(projectile.damage);
+        projectile.destroy();
+      }
+    );
   }
 
   updateAttackCone(angle) {
@@ -107,6 +122,47 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     });
     this.scene.time.delayedCall(this.attackDelay, () => {
       this.canAttack = true;
+    });
+
+    const enemies = this.scene.ennemies.getChildren();
+    enemies.forEach((enemy) => {
+      const distance = Phaser.Math.Distance.Between(
+        this.x,
+        this.y,
+        enemy.x,
+        enemy.y
+      );
+      const angleToEnemy = Phaser.Math.Angle.Between(
+        this.x,
+        this.y,
+        enemy.x,
+        enemy.y
+      );
+      const angleDifference = Phaser.Math.Angle.Wrap(angleToEnemy - this.angle);
+
+      if (
+        distance <= this.whipLength &&
+        Math.abs(angleDifference) <= Phaser.Math.DegToRad(this.whipAngle / 2)
+      ) {
+        enemy.health -= this.damage;
+        if (enemy.health <= 0) {
+          enemy.destroy();
+        }
+      }
+    });
+  }
+
+  takeDamage(damage) {
+    if (this.invincible) return;
+    this.invincible = true;
+    this.health -= damage;
+    console.log(this.health);
+    if (this.health <= 0) {
+      this.destroy();
+    }
+
+    this.scene.time.delayedCall(1000, () => {
+      this.invincible = false;
     });
   }
 }
