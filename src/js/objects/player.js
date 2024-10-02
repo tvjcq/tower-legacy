@@ -25,6 +25,15 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.attackDelay = 1000;
     this.attackDuration = 200;
     this.invincible = false;
+
+    this.rollDistance = 200;
+    this.rollDuration = 300;
+    this.rollActive = false;
+    this.dashTaked = false;
+    // Ajout des propriétés pour la barre de récupération de roulade
+    this.rollCooldown = 1500; // Temps de récupération en millisecondes
+    this.rollCooldownTimer = 0;
+    this.rollCooldownBar = this.scene.add.graphics();
   }
 
   update(cursors, pointer) {
@@ -71,6 +80,24 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.setVelocityX(velocityX);
     this.setVelocityY(velocityY);
 
+    if (this.rollCooldownTimer > 0) {
+      this.rollCooldownTimer -= this.scene.game.loop.delta;
+      const cooldownProgress = Math.max(
+        this.rollCooldownTimer / this.rollCooldown,
+        0
+      );
+      this.rollCooldownBar.clear();
+      this.rollCooldownBar.fillStyle(0x00ff00);
+      this.rollCooldownBar.fillRect(
+        this.x - 25,
+        this.y + 40,
+        50 * cooldownProgress,
+        5
+      );
+    } else {
+      this.rollCooldownBar.clear();
+    }
+
     const speed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
     const maxSpeed = this.speed;
 
@@ -87,6 +114,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     if (pointer.isDown) {
       this.Attack();
+    }
+
+    if (cursors.space.isDown) {
+      this.roll();
     }
 
     this.scene.physics.overlap(this, this.scene.ennemies, (player, ennemy) => {
@@ -196,6 +227,32 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     this.scene.time.delayedCall(1000, () => {
       this.invincible = false;
+    });
+  }
+
+  roll() {
+    if (this.rollActive) return; // Empêcher la roulade si déjà en cours
+    console.log("Roulade");
+    this.rollActive = true;
+
+    const rollDistance = this.rollDistance;
+    const rollDuration = this.rollDuration;
+
+    // Calculer la direction de la roulade
+    const rollDirection = new Phaser.Math.Vector2(
+      this.body.velocity
+    ).normalize();
+
+    // Appliquer la roulade
+    this.scene.tweens.add({
+      targets: this,
+      x: this.x + rollDirection.x * rollDistance,
+      y: this.y + rollDirection.y * rollDistance,
+      duration: rollDuration,
+      onComplete: () => {
+        this.rollActive = false;
+        this.rollCooldownTimer = this.rollCooldown;
+      },
     });
   }
 }

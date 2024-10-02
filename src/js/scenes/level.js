@@ -27,6 +27,7 @@ export default class Level extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
     this.player = new Player(this, width / 2, height / 2, "player");
+    this.scene.launch("Interface", { player: this.player });
     this.ennemies = this.physics.add.group();
     this.ennemies.add(new Ennemy1(this, 100, 100, "ennemy1"));
     this.ennemies.add(new Ennemy2(this, 200, 200, "ennemy2"));

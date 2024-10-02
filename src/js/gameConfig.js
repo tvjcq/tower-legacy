@@ -2,6 +2,7 @@
 // import Lobby from "./scenes/lobby.js";
 import Level from "./scenes/level.js";
 import UpgradeScene from "./scenes/upgradeScene.js";
+import Interface from "./scenes/interface.js";
 
 const config = {
   type: Phaser.AUTO,
@@ -18,7 +19,7 @@ const config = {
       debug: true, // ! PENSER À LE PASSER À FALSE À LA FIN
     },
   },
-  scene: [Level, UpgradeScene],
+  scene: [Level, UpgradeScene, Interface],
   backgroundColor: "#54e5a7",
 };
 
