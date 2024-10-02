@@ -27,6 +27,15 @@ export default class Ennemy1 extends Phaser.Physics.Arcade.Sprite {
     if (distance > 10) {
       this.scene.physics.moveTo(this, player.x, player.y, this.speed);
     }
+
+    const speed = Math.sqrt(this.body.velocity.x ** 2 + this.body.velocity.y ** 2);
+    if (speed > 0) {
+      const scaleFactor = 1 + (speed / this.speed) * 0.2;
+      const time = this.scene.time.now / 100;
+      this.setScale(0.08, 0.08 * (1 + 0.1 * Math.sin(time) * scaleFactor));
+    } else {
+      this.setScale(0.08);
+    }
   }
 
   dead() {

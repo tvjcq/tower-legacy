@@ -3,6 +3,7 @@ import Ennemy1 from "../objects/ennemy1.js";
 import Ennemy2 from "../objects/ennemy2.js";
 import Ennemy3 from "../objects/ennemy3.js";
 import Ennemy4 from "../objects/ennemy4.js";
+import Ennemy5 from "../objects/ennemy5.js";
 
 export default class Level extends Phaser.Scene {
   constructor() {
@@ -11,12 +12,16 @@ export default class Level extends Phaser.Scene {
 
   preload() {
     this.load.image("player", "src/assets/playerIdle.png");
-    this.load.image("ennemy1", "src/assets/ennemy1Idle.avif");
-    this.load.image("ennemy2", "src/assets/ennemy2Idle.webp");
-    this.load.image("ennemy3", "src/assets/ennemy3Idle.jpg");
-    this.load.image("ennemy4", "src/assets/ennemy4Idle.jpg");
+    this.load.image("ennemy1", "src/assets/ennemy1Idle.png");
+    this.load.image("ennemy2", "src/assets/ennemy2Idle.png");
+    this.load.image("ennemy3", "src/assets/ennemy3Idle.png");
+    this.load.image("ennemy4", "src/assets/ennemy4Idle.png");
+    this.load.image("ennemy5", "src/assets/ennemy5Idle.png");
     this.load.image("projectile", "src/assets/projectile.png");
     this.load.image("explosion", "src/assets/projectile.png");
+    this.load.image("upgrade1", "src/assets/upgrade1.png");
+    this.load.image("upgrade2", "src/assets/upgrade2.png");
+    this.load.image("upgrade3", "src/assets/upgrade3.png");
   }
 
   create() {
@@ -27,6 +32,7 @@ export default class Level extends Phaser.Scene {
     this.ennemies.add(new Ennemy2(this, 200, 200, "ennemy2"));
     this.ennemies.add(new Ennemy3(this, 300, 300, "ennemy3"));
     this.ennemies.add(new Ennemy4(this, 400, 100, "ennemy4"));
+    this.ennemies.add(new Ennemy5(this, 500, 200, "ennemy5"));
 
     this.projectiles = this.physics.add.group();
     this.explosions = this.add.group();
@@ -42,6 +48,14 @@ export default class Level extends Phaser.Scene {
 
     // Gérer la souris
     this.pointer = this.input.activePointer;
+
+    // Afficher les upgrades toutes les 10 secondes
+    this.time.addEvent({
+      delay: 10000,
+      loop: true,
+      callback: this.showUpgrades,
+      callbackScope: this,
+    });
   }
 
   update() {
@@ -58,5 +72,13 @@ export default class Level extends Phaser.Scene {
     objects.forEach((object) => {
       callback(object.gameObject);
     });
+  }
+
+  showUpgrades() {
+    // Mettre le jeu en pause
+    this.scene.pause();
+
+    // Lancer la scène des améliorations
+    this.scene.launch("UpgradeScene", { player: this.player });
   }
 }

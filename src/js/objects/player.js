@@ -10,6 +10,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.setScale(0.025); // ! À CHANGER
 
     this.damage = 5;
+    this.maxHealth = 10;
     this.health = 10;
     this.speed = 250;
 
@@ -70,6 +71,18 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.setVelocityX(velocityX);
     this.setVelocityY(velocityY);
 
+    const speed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
+    const maxSpeed = this.speed;
+
+    // Appliquer l'animation de déformation seulement si le joueur se déplace
+    if (speed > 0) {
+      const scaleFactor = 1 + (speed / maxSpeed) * 0.2; // Ajuster le facteur de déformation
+      const time = this.scene.time.now / 50; // Ajuster la vitesse de l'animation
+      this.setScale(0.025, 0.025 * (1 + 0.1 * Math.sin(time) * scaleFactor));
+    } else {
+      // Réinitialiser l'échelle lorsque le joueur ne se déplace pas
+      this.setScale(0.025);
+    }
     this.updateAttackCone(this.angle);
 
     if (pointer.isDown) {
