@@ -173,6 +173,13 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         enemy.health -= this.damage;
         if (enemy.health <= 0) {
           enemy.dead();
+        } else {
+          // Appliquer le recul
+          const knockbackDistance = 20; // Ajustez cette valeur selon vos besoins
+          const knockbackAngle = angleToEnemy; // Angle opposé à l'attaque
+          enemy.knockbackX = Math.cos(knockbackAngle) * knockbackDistance;
+          enemy.knockbackY = Math.sin(knockbackAngle) * knockbackDistance;
+          enemy.knockbackTime = 50; // Durée du recul en millisecondes
         }
       }
     });

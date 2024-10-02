@@ -16,40 +16,55 @@ export default class Ennemy2 extends Phaser.Physics.Arcade.Sprite {
     this.projectileSpeed = 75;
     this.burstCount = 3;
     this.burstDelay = 500;
+
+    this.knockbackX = 0;
+    this.knockbackY = 0;
+    this.knockbackTime = 0;
   }
 
   update(player) {
-    // Calculer l'angle vers le joueur
-    this.angle = Phaser.Math.Angle.Between(this.x, this.y, player.x, player.y);
-    // Calculer la distance entre le joueur et l'ennemi
-    const distance = Phaser.Math.Distance.Between(
-      this.x,
-      this.y,
-      player.x,
-      player.y
-    );
-    // Se déplacer vers le joueur
-    if (distance > 250) {
-      this.scene.physics.moveTo(this, player.x, player.y, this.speed);
-    } else if (distance < 200) {
-      this.scene.physics.moveTo(this, player.x, player.y, -this.speed);
+    if (this.knockbackTime > 0) {
+      this.knockbackTime -= this.scene.game.loop.delta;
+      this.x += this.knockbackX;
+      this.y += this.knockbackY;
     } else {
-      this.scene.physics.moveTo(this, player.x, player.y, 0);
-    }
+      // Calculer l'angle vers le joueur
+      this.angle = Phaser.Math.Angle.Between(
+        this.x,
+        this.y,
+        player.x,
+        player.y
+      );
+      // Calculer la distance entre le joueur et l'ennemi
+      const distance = Phaser.Math.Distance.Between(
+        this.x,
+        this.y,
+        player.x,
+        player.y
+      );
+      // Se déplacer vers le joueur
+      if (distance > 250) {
+        this.scene.physics.moveTo(this, player.x, player.y, this.speed);
+      } else if (distance < 200) {
+        this.scene.physics.moveTo(this, player.x, player.y, -this.speed);
+      } else {
+        this.scene.physics.moveTo(this, player.x, player.y, 0);
+      }
 
-    const speed = Math.sqrt(
-      this.body.velocity.x ** 2 + this.body.velocity.y ** 2
-    );
-    if (speed > 0) {
-      const scaleFactor = 1 + (speed / this.speed) * 0.2;
-      const time = this.scene.time.now / 100;
-      this.setScale(0.08, 0.08 * (1 + 0.1 * Math.sin(time) * scaleFactor));
-    } else {
-      this.setScale(0.08);
-    }
+      const speed = Math.sqrt(
+        this.body.velocity.x ** 2 + this.body.velocity.y ** 2
+      );
+      if (speed > 0) {
+        const scaleFactor = 1 + (speed / this.speed) * 0.2;
+        const time = this.scene.time.now / 100;
+        this.setScale(0.08, 0.08 * (1 + 0.1 * Math.sin(time) * scaleFactor));
+      } else {
+        this.setScale(0.08);
+      }
 
-    // Tirer
-    this.shoot(player);
+      // Tirer
+      this.shoot(player);
+    }
   }
 
   shoot(player) {

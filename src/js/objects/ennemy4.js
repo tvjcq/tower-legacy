@@ -17,39 +17,56 @@ export default class Ennemy4 extends Phaser.Physics.Arcade.Sprite {
     this.explosionRadius = 100; // Rayon de l'explosion
     this.explosionDamage = 5; // Dégâts de l'explosion
     this.isExploding = false;
+
+    this.knockbackX = 0;
+    this.knockbackY = 0;
+    this.knockbackTime = 0;
   }
 
   update(player) {
     if (this.isExploding) return;
 
-    // Calculer l'angle vers le joueur
-    this.angle = Phaser.Math.Angle.Between(this.x, this.y, player.x, player.y);
-    // Calculer la distance entre le joueur et l'ennemi
-    const distance = Phaser.Math.Distance.Between(
-      this.x,
-      this.y,
-      player.x,
-      player.y
-    );
-    // Se déplacer vers le joueur
-    if (distance > 75) {
-      this.scene.physics.moveTo(this, player.x, player.y, this.speed);
+    if (this.knockbackTime > 0) {
+      this.knockbackTime -= this.scene.game.loop.delta;
+      this.x += this.knockbackX;
+      this.y += this.knockbackY;
     } else {
-      this.scene.physics.moveTo(this, player.x, player.y, 0);
-      this.isExploding = true;
-      this.scene.time.delayedCall(this.explosionDelay, () => {
-        if (!this.scene || !this.active) return;
-        this.explosion();
-      });
-    }
+      // Calculer l'angle vers le joueur
+      this.angle = Phaser.Math.Angle.Between(
+        this.x,
+        this.y,
+        player.x,
+        player.y
+      );
+      // Calculer la distance entre le joueur et l'ennemi
+      const distance = Phaser.Math.Distance.Between(
+        this.x,
+        this.y,
+        player.x,
+        player.y
+      );
+      // Se déplacer vers le joueur
+      if (distance > 75) {
+        this.scene.physics.moveTo(this, player.x, player.y, this.speed);
+      } else {
+        this.scene.physics.moveTo(this, player.x, player.y, 0);
+        this.isExploding = true;
+        this.scene.time.delayedCall(this.explosionDelay, () => {
+          if (!this.scene || !this.active) return;
+          this.explosion();
+        });
+      }
 
-    const speed = Math.sqrt(this.body.velocity.x ** 2 + this.body.velocity.y ** 2);
-    if (speed > 0) {
-      const scaleFactor = 1 + (speed / this.speed) * 0.2;
-      const time = this.scene.time.now / 100;
-      this.setScale(0.08, 0.08 * (1 + 0.1 * Math.sin(time) * scaleFactor));
-    } else {
-      this.setScale(0.08);
+      const speed = Math.sqrt(
+        this.body.velocity.x ** 2 + this.body.velocity.y ** 2
+      );
+      if (speed > 0) {
+        const scaleFactor = 1 + (speed / this.speed) * 0.2;
+        const time = this.scene.time.now / 100;
+        this.setScale(0.08, 0.08 * (1 + 0.1 * Math.sin(time) * scaleFactor));
+      } else {
+        this.setScale(0.08);
+      }
     }
   }
 
@@ -70,7 +87,12 @@ export default class Ennemy4 extends Phaser.Physics.Arcade.Sprite {
       this.y,
       this.explosionRadius,
       (player) => {
-        player.health -= this.explosionDamage;
+        if (player instanceof Player) {
+          player.takeDamage(this.explosionDamage);
+        } else {
+          player.health -= this.explosionDamage;
+          console.log("Dégâts infligés à l'ennemi :" + this.explosionDamage);
+        }
       }
     );
 

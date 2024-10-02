@@ -15,6 +15,10 @@ export default class Enemy5 extends Phaser.Physics.Arcade.Sprite {
     this.canShoot = true;
     this.canMove = true;
 
+    this.knockbackX = 0;
+    this.knockbackY = 0;
+    this.knockbackTime = 0;
+
     // Propriétés du laser
     this.laserWarningDuration = 2000; // 2 secondes de suivi
     this.laserLockDuration = 1000; // 1 seconde de blocage avant le tir
@@ -26,41 +30,52 @@ export default class Enemy5 extends Phaser.Physics.Arcade.Sprite {
   }
 
   update(player) {
-    // Calculer l'angle vers le joueur
-    this.angle = Phaser.Math.Angle.Between(this.x, this.y, player.x, player.y);
-    // Calculer la distance entre le joueur et l'ennemi
-    const distance = Phaser.Math.Distance.Between(
-      this.x,
-      this.y,
-      player.x,
-      player.y
-    );
+    if (this.knockbackTime > 0) {
+      this.knockbackTime -= this.scene.game.loop.delta;
+      this.x += this.knockbackX;
+      this.y += this.knockbackY;
+    } else {
+      // Calculer l'angle vers le joueur
+      this.angle = Phaser.Math.Angle.Between(
+        this.x,
+        this.y,
+        player.x,
+        player.y
+      );
+      // Calculer la distance entre le joueur et l'ennemi
+      const distance = Phaser.Math.Distance.Between(
+        this.x,
+        this.y,
+        player.x,
+        player.y
+      );
 
-    // Déplacement en fonction de la distance
-    if (this.canMove) {
-      if (distance > 400) {
-        this.scene.physics.moveTo(this, player.x, player.y, this.speed);
-      } else if (distance < 350) {
-        this.scene.physics.moveTo(this, player.x, player.y, -this.speed);
+      // Déplacement en fonction de la distance
+      if (this.canMove) {
+        if (distance > 400) {
+          this.scene.physics.moveTo(this, player.x, player.y, this.speed);
+        } else if (distance < 350) {
+          this.scene.physics.moveTo(this, player.x, player.y, -this.speed);
+        }
+      } else {
+        this.scene.physics.moveTo(this, player.x, player.y, 0);
       }
-    } else {
-      this.scene.physics.moveTo(this, player.x, player.y, 0);
-    }
 
-    // Animation de l'ennemi
-    const speed = Math.sqrt(
-      this.body.velocity.x ** 2 + this.body.velocity.y ** 2
-    );
-    if (speed > 0) {
-      const scaleFactor = 1 + (speed / this.speed) * 0.2;
-      const time = this.scene.time.now / 100;
-      this.setScale(0.08, 0.08 * (1 + 0.1 * Math.sin(time) * scaleFactor));
-    } else {
-      this.setScale(0.08);
-    }
+      // Animation de l'ennemi
+      const speed = Math.sqrt(
+        this.body.velocity.x ** 2 + this.body.velocity.y ** 2
+      );
+      if (speed > 0) {
+        const scaleFactor = 1 + (speed / this.speed) * 0.2;
+        const time = this.scene.time.now / 100;
+        this.setScale(0.08, 0.08 * (1 + 0.1 * Math.sin(time) * scaleFactor));
+      } else {
+        this.setScale(0.08);
+      }
 
-    // Tirer
-    this.shoot(player);
+      // Tirer
+      this.shoot(player);
+    }
   }
 
   shoot(player) {
@@ -133,13 +148,14 @@ export default class Enemy5 extends Phaser.Physics.Arcade.Sprite {
     // Créer le laser final qui inflige des dégâts au joueur
     const laserLength = 1000;
     const offset = 35; // Pour que le laser parte devant l'ennemie et pas depuis le centre
+    const laserWidth = 50; // Augmenter l'épaisseur du laser
     const startX = this.x + Math.cos(this.lockedLaserAngle) * offset;
     const startY = this.y + Math.sin(this.lockedLaserAngle) * offset;
     const endX = startX + Math.cos(this.lockedLaserAngle) * laserLength;
     const endY = startY + Math.sin(this.lockedLaserAngle) * laserLength;
 
     const laser = this.scene.add.graphics({
-      lineStyle: { width: 10, color: 0xff0000 },
+      lineStyle: { width: laserWidth, color: 0xff0000 },
     });
 
     laser.beginPath();
@@ -148,17 +164,73 @@ export default class Enemy5 extends Phaser.Physics.Arcade.Sprite {
     laser.strokePath();
     laser.closePath();
 
-    // Représenter le laser sous forme de ligne pour la détection
-    const laserLine = new Phaser.Geom.Line(startX, startY, endX, endY);
+    // Représenter le laser sous forme de polygone pour la détection
+    const halfWidth = laserWidth / 2;
+    const anglePerpendicular = this.lockedLaserAngle + Math.PI / 2;
+
+    const points = [
+      new Phaser.Geom.Point(
+        startX + Math.cos(anglePerpendicular) * halfWidth,
+        startY + Math.sin(anglePerpendicular) * halfWidth
+      ),
+      new Phaser.Geom.Point(
+        startX - Math.cos(anglePerpendicular) * halfWidth,
+        startY - Math.sin(anglePerpendicular) * halfWidth
+      ),
+      new Phaser.Geom.Point(
+        endX - Math.cos(anglePerpendicular) * halfWidth,
+        endY - Math.sin(anglePerpendicular) * halfWidth
+      ),
+      new Phaser.Geom.Point(
+        endX + Math.cos(anglePerpendicular) * halfWidth,
+        endY + Math.sin(anglePerpendicular) * halfWidth
+      ),
+    ];
+
+    const laserPolygon = new Phaser.Geom.Polygon(points);
+
+    // Dessiner le polygone de collision pour le débogage
+    const debugGraphics = this.scene.add.graphics({
+      lineStyle: { width: 2, color: 0x00ff00 },
+    });
+    debugGraphics.strokePoints(points, true);
+
+    // Convertir le rectangle du joueur en polygone
+    const playerBounds = player.getBounds();
+    const playerPoints = [
+      new Phaser.Geom.Point(playerBounds.x, playerBounds.y),
+      new Phaser.Geom.Point(
+        playerBounds.x + playerBounds.width,
+        playerBounds.y
+      ),
+      new Phaser.Geom.Point(
+        playerBounds.x + playerBounds.width,
+        playerBounds.y + playerBounds.height
+      ),
+      new Phaser.Geom.Point(
+        playerBounds.x,
+        playerBounds.y + playerBounds.height
+      ),
+    ];
+    const playerPolygon = new Phaser.Geom.Polygon(playerPoints);
 
     // Vérifier la collision avec le joueur
-    if (Phaser.Geom.Intersects.LineToRectangle(laserLine, player.getBounds())) {
+    let collisionDetected = false;
+    for (const point of playerPoints) {
+      if (Phaser.Geom.Polygon.ContainsPoint(laserPolygon, point)) {
+        collisionDetected = true;
+        break;
+      }
+    }
+
+    if (collisionDetected) {
       player.takeDamage(this.damage);
     }
 
-    // Supprimer le laser après 500ms
+    // Supprimer le laser et le polygone de débogage après 500ms
     this.scene.time.delayedCall(500, () => {
       laser.destroy();
+      debugGraphics.destroy();
       this.canMove = true;
     });
   }
