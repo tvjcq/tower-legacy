@@ -7,7 +7,7 @@ export default class Ennemy2 extends Phaser.Physics.Arcade.Sprite {
     this.setCollideWorldBounds(true);
     this.setScale(0.08); // ! À CHANGER
 
-    this.damage = 6;
+    this.damage = 4;
     this.health = 9;
 
     this.speed = 25;
@@ -81,7 +81,8 @@ export default class Ennemy2 extends Phaser.Physics.Arcade.Sprite {
         this.y,
         "projectile"
       );
-      projectile.setScale(0.1);
+      projectile.setScale(3);
+      projectile.setSize(20, 20);
       const angle = Phaser.Math.Angle.Between(
         this.x,
         this.y,

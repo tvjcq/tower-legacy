@@ -18,8 +18,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.whipLength = 200;
 
     this.attackCone = this.scene.add.graphics({
-      fillStyle: { color: 0xff0000, alpha: 0.5 },
-      lineStyle: { width: 2, color: 0xff0000 },
+      lineStyle: { width: 3, color: 0xffffff },
     });
     this.canAttack = true;
     this.attackDelay = 1000;
@@ -194,9 +193,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       const y = startY + Math.sin(a) * this.whipLength;
       points.push(new Phaser.Math.Vector2(x, y));
     }
-
-    // Dessiner le cône d'attaque
-    this.attackCone.strokePoints(points, true);
   }
 
   Attack() {
@@ -247,6 +243,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         blood.play("bloodAnim");
         if (enemy.health <= 0) {
           enemy.dead();
+          // Appliquer le recul
+          const knockbackDistance = this.knockbackDistance; // Ajustez cette valeur selon vos besoins
+          const knockbackAngle = angleToEnemy; // Angle opposé à l'attaque
+          enemy.knockbackX = Math.cos(knockbackAngle) * knockbackDistance;
+          enemy.knockbackY = Math.sin(knockbackAngle) * knockbackDistance;
+          enemy.knockbackTime = 50; // Durée du recul en millisecondes
         } else {
           // Appliquer le recul
           const knockbackDistance = this.knockbackDistance; // Ajustez cette valeur selon vos besoins

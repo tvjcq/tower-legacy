@@ -92,7 +92,7 @@ export default class Ennemy2 extends Phaser.Physics.Arcade.Sprite {
               this.y,
               "projectile"
             );
-            projectile.setScale(0.05);
+            projectile.setSize(20, 20);
             const angle = Phaser.Math.Angle.Between(
               this.x,
               this.y,

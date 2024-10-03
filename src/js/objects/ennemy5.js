@@ -7,7 +7,7 @@ export default class Enemy5 extends Phaser.Physics.Arcade.Sprite {
     this.setCollideWorldBounds(true);
     this.setScale(0.08); // Ajuster la taille si nécessaire
 
-    this.damage = 6;
+    this.damage = 4;
     this.health = 9;
 
     this.speed = 25;

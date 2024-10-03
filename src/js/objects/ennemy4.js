@@ -9,11 +9,11 @@ export default class Ennemy4 extends Phaser.Physics.Arcade.Sprite {
     this.setCollideWorldBounds(true);
     this.setScale(0.08); // ! À CHANGER
 
-    this.damage = 7;
+    this.damage = 5;
     this.health = 5;
 
     this.speed = 275;
-    this.explosionDelay = 1000;
+    this.explosionDelay = 500;
     this.explosionRadius = 100; // Rayon de l'explosion
     this.explosionDamage = 5; // Dégâts de l'explosion
     this.isExploding = false;
@@ -82,7 +82,9 @@ export default class Ennemy4 extends Phaser.Physics.Arcade.Sprite {
   }
 
   dead() {
-    this.explosion();
+    setTimeout(() => {
+      this.explosion();
+    }, 100);
   }
 
   explosion() {
