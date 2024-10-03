@@ -14,6 +14,7 @@ export default class UpgradeScene extends Phaser.Scene {
       { texture: "upgrade1", effect: (player) => (player.maxHealth += 5) },
       { texture: "upgrade2", effect: (player) => (player.speed += 50) },
       { texture: "upgrade3", effect: (player) => (player.damage += 2) },
+      { texture: "upgrade4", effect: (player) => (player.dashTaked = true) },
     ];
 
     // Choisir trois upgrades aléatoires

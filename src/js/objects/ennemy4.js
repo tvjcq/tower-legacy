@@ -18,9 +18,14 @@ export default class Ennemy4 extends Phaser.Physics.Arcade.Sprite {
     this.explosionDamage = 5; // Dégâts de l'explosion
     this.isExploding = false;
 
+    this.blinkInterval = 500; // Intervalle de clignotement initial en millisecondes
+    this.blinking = false;
+
     this.knockbackX = 0;
     this.knockbackY = 0;
     this.knockbackTime = 0;
+
+    this.startBlinking();
   }
 
   update(player) {
@@ -51,6 +56,12 @@ export default class Ennemy4 extends Phaser.Physics.Arcade.Sprite {
       } else {
         this.scene.physics.moveTo(this, player.x, player.y, 0);
         this.isExploding = true;
+
+        // Accélérer le clignotement avant l'explosion
+        this.blinkEvent.remove();
+        this.blinkInterval = 100; // Intervalle de clignotement rapide en millisecondes
+        this.startBlinking();
+
         this.scene.time.delayedCall(this.explosionDelay, () => {
           if (!this.scene || !this.active) return;
           this.explosion();
@@ -76,10 +87,13 @@ export default class Ennemy4 extends Phaser.Physics.Arcade.Sprite {
 
   explosion() {
     // Créer une explosion visuelle
-    const explosion = this.scene.add
-      .sprite(this.x, this.y, "explosion")
-      .setScale(0.5);
-    this.scene.explosions.add(explosion);
+    const explosion = this.scene.add.sprite(this.x, this.y, "explosion");
+    explosion.setScale(4);
+    explosion.play("explosion");
+
+    setTimeout(() => {
+      explosion.destroy();
+    }, 200);
 
     // Infliger des dégâts au joueur dans une zone circulaire
     this.scene.physicsOverlapCirc(
@@ -96,10 +110,25 @@ export default class Ennemy4 extends Phaser.Physics.Arcade.Sprite {
       }
     );
 
-    this.scene.time.delayedCall(500, () => {
-      explosion.destroy();
-    });
-
     this.destroy();
+  }
+
+  startBlinking() {
+    this.blinking = true;
+    this.blinkEvent = this.scene.time.addEvent({
+      delay: this.blinkInterval,
+      callback: this.blink,
+      callbackScope: this,
+      loop: true,
+    });
+  }
+
+  blink() {
+    if (!this.scene || !this.active) return;
+    if (this.texture.key === "ennemy4") {
+      this.setTexture("ennemy4_blink");
+    } else {
+      this.setTexture("ennemy4");
+    }
   }
 }

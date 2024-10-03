@@ -12,16 +12,27 @@ export default class Level extends Phaser.Scene {
 
   preload() {
     this.load.image("player", "src/assets/playerIdle.png");
+    this.load.image("attackSprite", "src/assets/attackSprite.png");
+    this.load.image("dashSprite", "src/assets/dashSprite.png");
     this.load.image("ennemy1", "src/assets/ennemy1Idle.png");
     this.load.image("ennemy2", "src/assets/ennemy2Idle.png");
     this.load.image("ennemy3", "src/assets/ennemy3Idle.png");
     this.load.image("ennemy4", "src/assets/ennemy4Idle.png");
+    this.load.image("ennemy4_blink", "src/assets/ennemy4Blink.png");
     this.load.image("ennemy5", "src/assets/ennemy5Idle.png");
     this.load.image("projectile", "src/assets/projectile.png");
-    this.load.image("explosion", "src/assets/projectile.png");
+    this.load.spritesheet("explosion", "src/assets/explosionAnim.png", {
+      frameWidth: 65,
+      frameHeight: 65,
+    });
+    this.load.spritesheet("blood", "src/assets/bloodAnim.png", {
+      frameWidth: 64,
+      frameHeight: 64,
+    });
     this.load.image("upgrade1", "src/assets/upgrade1.png");
     this.load.image("upgrade2", "src/assets/upgrade2.png");
     this.load.image("upgrade3", "src/assets/upgrade3.png");
+    this.load.image("upgrade4", "src/assets/upgrade4.png");
   }
 
   create() {
@@ -56,6 +67,26 @@ export default class Level extends Phaser.Scene {
       loop: true,
       callback: this.showUpgrades,
       callbackScope: this,
+    });
+
+    this.anims.create({
+      key: "bloodAnim",
+      frames: this.anims.generateFrameNumbers("blood", {
+        start: 2,
+        end: 15,
+      }),
+      frameRate: 45,
+      repeat: 0,
+    });
+
+    this.anims.create({
+      key: "explosion",
+      frames: this.anims.generateFrameNumbers("explosion", {
+        start: 0,
+        end: 5,
+      }),
+      frameRate: 30,
+      repeat: 0,
     });
   }
 

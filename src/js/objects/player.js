@@ -25,6 +25,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.attackDelay = 1000;
     this.attackDuration = 200;
     this.invincible = false;
+    this.knockbackDistance = 20;
 
     this.rollDistance = 200;
     this.rollDuration = 300;
@@ -34,6 +35,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.rollCooldown = 1500; // Temps de récupération en millisecondes
     this.rollCooldownTimer = 0;
     this.rollCooldownBar = this.scene.add.graphics();
+
+    this.dashDistance = 200; // Distance de téléportation
+    this.dashCooldown = 1500; // Temps de récupération en millisecondes
+    this.dashActive = false;
+    this.dashCooldownTimer = 0;
   }
 
   update(cursors, pointer) {
@@ -80,22 +86,46 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.setVelocityX(velocityX);
     this.setVelocityY(velocityY);
 
-    if (this.rollCooldownTimer > 0) {
-      this.rollCooldownTimer -= this.scene.game.loop.delta;
-      const cooldownProgress = Math.max(
-        this.rollCooldownTimer / this.rollCooldown,
-        0
-      );
-      this.rollCooldownBar.clear();
-      this.rollCooldownBar.fillStyle(0x00ff00);
-      this.rollCooldownBar.fillRect(
-        this.x - 25,
-        this.y + 40,
-        50 * cooldownProgress,
-        5
-      );
+    if (!this.dashTaked) {
+      if (this.rollCooldownTimer > 0) {
+        this.rollCooldownTimer -= this.scene.game.loop.delta;
+        const cooldownProgress = Math.max(
+          this.rollCooldownTimer / this.rollCooldown,
+          0
+        );
+        this.rollCooldownBar.clear();
+        this.rollCooldownBar.fillStyle(0x00ff00, 0.5);
+        this.rollCooldownBar.fillRect(
+          this.x - 25,
+          this.y + 40,
+          50 * cooldownProgress,
+          10
+        );
+        this.rollCooldownBar.lineStyle(2, 0xffffff, 0.5);
+        this.rollCooldownBar.strokeRect(this.x - 25, this.y + 40, 50, 10);
+      } else {
+        this.rollCooldownBar.clear();
+      }
     } else {
-      this.rollCooldownBar.clear();
+      if (this.dashCooldownTimer > 0) {
+        this.dashCooldownTimer -= this.scene.game.loop.delta;
+        const cooldownProgress = Math.max(
+          this.dashCooldownTimer / this.dashCooldown,
+          0
+        );
+        this.rollCooldownBar.clear();
+        this.rollCooldownBar.fillStyle(0x00ff00, 0.5);
+        this.rollCooldownBar.fillRect(
+          this.x - 25,
+          this.y + 40,
+          50 * cooldownProgress,
+          10
+        );
+        this.rollCooldownBar.lineStyle(2, 0xffffff, 0.5);
+        this.rollCooldownBar.strokeRect(this.x - 25, this.y + 40, 50, 10);
+      } else {
+        this.rollCooldownBar.clear();
+      }
     }
 
     const speed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
@@ -116,8 +146,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       this.Attack();
     }
 
-    if (cursors.space.isDown) {
-      this.roll();
+    if (cursors.space.isDown && (velocityX !== 0 || velocityY !== 0)) {
+      if (!this.dashTaked) {
+        this.roll();
+      } else {
+        this.dash();
+      }
     }
 
     this.scene.physics.overlap(this, this.scene.ennemies, (player, ennemy) => {
@@ -168,15 +202,20 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   Attack() {
     if (!this.canAttack) return;
     this.canAttack = false;
+    const attackSprite = this.scene.add.sprite(this.x, this.y, "attackSprite");
+    attackSprite.setScale(0.4); // Ajuster la taille de l'image
+    attackSprite.setOrigin(-0.1, 0.5); // Ajuster l'origine pour que l'image pivote autour du joueur
+    attackSprite.setRotation(this.angle); // Placer l'image dans le même angle que le joueur
+
     this.scene.tweens.add({
-      targets: this.attackCone,
+      targets: attackSprite,
       alpha: { from: 1, to: 0 },
       duration: this.attackDuration,
       onComplete: () => {
-        this.attackCone.clear();
-        this.attackCone.alpha = 1; // Réinitialiser l'alpha pour la prochaine attaque
+        attackSprite.destroy(); // Détruire le sprite après l'animation
       },
     });
+
     this.scene.time.delayedCall(this.attackDelay, () => {
       this.canAttack = true;
     });
@@ -198,15 +237,19 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       const angleDifference = Phaser.Math.Angle.Wrap(angleToEnemy - this.angle);
 
       if (
-        distance <= this.whipLength &&
+        distance <= this.whipLength + 20 &&
         Math.abs(angleDifference) <= Phaser.Math.DegToRad(this.whipAngle / 2)
       ) {
         enemy.health -= this.damage;
+        this.scene.cameras.main.shake(100, 0.01);
+        const blood = this.scene.add.sprite(enemy.x, enemy.y, "blood");
+        blood.setScale(1.5);
+        blood.play("bloodAnim");
         if (enemy.health <= 0) {
           enemy.dead();
         } else {
           // Appliquer le recul
-          const knockbackDistance = 20; // Ajustez cette valeur selon vos besoins
+          const knockbackDistance = this.knockbackDistance; // Ajustez cette valeur selon vos besoins
           const knockbackAngle = angleToEnemy; // Angle opposé à l'attaque
           enemy.knockbackX = Math.cos(knockbackAngle) * knockbackDistance;
           enemy.knockbackY = Math.sin(knockbackAngle) * knockbackDistance;
@@ -219,6 +262,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   takeDamage(damage) {
     if (this.invincible) return;
     this.invincible = true;
+    this.scene.cameras.main.shake(100, 0.01);
     this.health -= damage;
     console.log(this.health);
     if (this.health <= 0) {
@@ -250,9 +294,47 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       y: this.y + rollDirection.y * rollDistance,
       duration: rollDuration,
       onComplete: () => {
-        this.rollActive = false;
         this.rollCooldownTimer = this.rollCooldown;
+        setTimeout(() => {
+          this.rollActive = false;
+        }, this.rollCooldown);
       },
     });
+  }
+
+  dash() {
+    if (this.dashActive) return; // Empêcher le dash si déjà en cours
+    console.log("Dash");
+    this.dashActive = true;
+
+    // Calculer la direction du dash
+    const dashDirection = new Phaser.Math.Vector2(
+      this.body.velocity
+    ).normalize();
+
+    const dashSprite = this.scene.add.sprite(this.x, this.y, "dashSprite");
+    dashSprite.setScale(0.4);
+    dashSprite.setOrigin(0, 0.5);
+    dashSprite.setRotation(dashDirection.angle());
+
+    this.scene.tweens.add({
+      targets: dashSprite,
+      alpha: { from: 1, to: 0 },
+      duration: 200,
+      onComplete: () => {
+        dashSprite.destroy(); // Détruire le sprite après l'animation
+      },
+    });
+
+    // Appliquer le dash
+    this.x += dashDirection.x * this.dashDistance;
+    this.y += dashDirection.y * this.dashDistance;
+
+    // Mettre à jour le cooldown
+    this.dashCooldownTimer = this.dashCooldown;
+    setTimeout(() => {
+      this.dashCooldownTimer = 0;
+      this.dashActive = false;
+    }, this.dashCooldown);
   }
 }
