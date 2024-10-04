@@ -14,6 +14,7 @@ export default class Upgrade {
 
   applyEffect() {
     this.effect(this.scene.player);
+    this.scene.player.health = this.scene.player.maxHealth;
     console.log(
       this.scene.player.maxHealth,
       this.scene.player.health,
