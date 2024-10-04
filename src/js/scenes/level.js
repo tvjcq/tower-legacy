@@ -43,11 +43,11 @@ export default class Level extends Phaser.Scene {
     this.player = new Player(this, width / 2, height / 2, "player");
     this.scene.launch("Interface", { player: this.player });
     this.ennemies = this.physics.add.group();
-    this.ennemies.add(new Ennemy1(this, 100, 100, "ennemy1"));
-    this.ennemies.add(new Ennemy2(this, 200, 200, "ennemy2"));
-    this.ennemies.add(new Ennemy3(this, 300, 300, "ennemy3"));
-    this.ennemies.add(new Ennemy4(this, 400, 100, "ennemy4"));
-    this.ennemies.add(new Ennemy5(this, 500, 200, "ennemy5"));
+    // this.ennemies.add(new Ennemy1(this, 100, 100, "ennemy1"));
+    // this.ennemies.add(new Ennemy2(this, 200, 200, "ennemy2"));
+    // this.ennemies.add(new Ennemy3(this, 300, 300, "ennemy3"));
+    // this.ennemies.add(new Ennemy4(this, 400, 100, "ennemy4"));
+    // this.ennemies.add(new Ennemy5(this, 500, 200, "ennemy5"));
     // this.ennemies.add(new Boss(this, width / 2, 100, "boss"));
     this.projectiles = this.physics.add.group();
     this.explosions = this.add.group();
@@ -65,12 +65,26 @@ export default class Level extends Phaser.Scene {
     this.pointer = this.input.activePointer;
 
     // Afficher les upgrades toutes les 10 secondes
-    this.time.addEvent({
-      delay: 10000,
-      loop: true,
-      callback: this.showUpgrades,
-      callbackScope: this,
-    });
+    // this.time.addEvent({
+    //   delay: 10000,
+    //   loop: true,
+    //   callback: this.showUpgrades,
+    //   callbackScope: this,
+    // });
+
+    // Initialiser les étages et les vagues
+    this.stageIndex = 0;
+    this.totalStages = 10; // 10 étages
+    this.wavesPerStage = 5; // 5 vagues par étage
+    this.enemiesPerWave = [3, 4, 5, 6]; // Nombre d'ennemis par vague
+    this.waveInterval = 5000; // Intervalle entre chaque vague en millisecondes
+    this.spawnInterval = 100; // Intervalle de spawn en millisecondes
+    this.spawnRadius = 300; // Rayon de spawn autour du joueur
+
+    this.isWaveActive = false;
+    this.isStageActive = false;
+
+    this.startNextStage();
 
     this.anims.create({
       key: "bloodAnim",
@@ -94,12 +108,181 @@ export default class Level extends Phaser.Scene {
   }
 
   update() {
+    // Mettre à jour les objets (joueur, ennemis)
     this.player.update(this.cursors, this.pointer);
     if (this.ennemies.getChildren().length > 0) {
       this.ennemies.getChildren().forEach((ennemy) => {
         ennemy.update(this.player);
       });
     }
+
+    // Si tous les ennemis de la vague actuelle ont été spawnés, désactiver le spawn d'ennemis pour cette vague
+    if (this.spawnedEnemiesInWave >= this.currentWaveEnemies) {
+      this.isWaveActive = false;
+    }
+
+    // Vérifier si tous les ennemis de l'étage ont été éliminés
+    // Vérifier si tous les ennemis de l'étage ont été éliminés
+    if (
+      this.isStageActive &&
+      this.ennemies.countActive(true) === 0 && // Vérifier si tous les ennemis sont morts
+      this.waveIndex >= this.wavesPerStage && // Vérifier si toutes les vagues ont été lancées
+      this.spawnedEnemiesInStage >= this.totalEnemiesInStage // Vérifier si tous les ennemis de l'étage ont été spawnés
+    ) {
+      this.isStageActive = false;
+      this.stageIndex++;
+      this.startNextStage(); // Passer au prochain étage uniquement si toutes les conditions sont remplies
+    }
+  }
+
+  startNextStage() {
+    if (this.stageIndex >= this.totalStages) {
+      console.log("Tous les étages ont été complétés !");
+      return;
+    }
+
+    if (!this.isStageActive && this.stageIndex > 0) {
+      // Si l'étage est terminé, afficher les améliorations
+      this.showUpgrades();
+    }
+
+    console.log(`Début de l'étage ${this.stageIndex + 1}`);
+
+    this.waveIndex = 0;
+    this.totalEnemiesInStage = 20; // Exemple : 20 ennemis par étage
+    this.spawnedEnemiesInStage = 0;
+    this.remainingEnemiesInStage = this.totalEnemiesInStage;
+
+    this.isStageActive = true;
+    this.startNextWave();
+  }
+
+  startNextWave() {
+    if (this.waveIndex >= this.wavesPerStage) {
+      console.log("Toutes les vagues de l'étage ont été complétées !");
+      return; // Ne plus lancer de nouvelles vagues pour cet étage
+    }
+
+    console.log(`Début de la vague ${this.waveIndex + 1}`);
+
+    this.currentWaveEnemies =
+      this.enemiesPerWave[
+        Phaser.Math.Between(0, this.enemiesPerWave.length - 1)
+      ];
+    this.spawnedEnemiesInWave = 0;
+    this.remainingEnemiesInWave = this.currentWaveEnemies;
+
+    this.isWaveActive = true;
+
+    // Lancer un intervalle pour le spawn des ennemis
+    for (let i = 0; i < this.currentWaveEnemies; i++) {
+      this.time.delayedCall(i * this.spawnInterval, this.spawnEnemy, [], this);
+    }
+
+    // Démarrer la vague suivante après le délai défini, que les ennemis soient morts ou non
+    this.time.delayedCall(this.waveInterval, this.startNextWave, [], this);
+
+    this.waveIndex++;
+  }
+
+  spawnEnemy() {
+    if (
+      this.spawnedEnemiesInWave >= this.currentWaveEnemies ||
+      this.spawnedEnemiesInStage >= this.totalEnemiesInStage
+    ) {
+      return;
+    }
+
+    const { width, height } = this.scale;
+    const playerX = this.player.x;
+    const playerY = this.player.y;
+
+    let x, y;
+    do {
+      x = Phaser.Math.Between(
+        playerX - this.spawnRadius,
+        playerX + this.spawnRadius
+      );
+      y = Phaser.Math.Between(
+        playerY - this.spawnRadius,
+        playerY + this.spawnRadius
+      );
+    } while (x < 0 || x > width || y < 0 || y > height);
+
+    // Créer un portail avant de faire apparaître l'ennemi
+    const portal = this.add.sprite(x, y, "portal");
+    this.time.delayedCall(1000, () => {
+      portal.destroy();
+      this.createEnemy(x, y);
+    });
+
+    this.spawnedEnemiesInWave++;
+    this.spawnedEnemiesInStage++;
+  }
+
+  createEnemy(x, y) {
+    let enemy;
+    if (this.stageIndex === 0 || this.stageIndex === 1) {
+      const enemyType = Phaser.Math.Between(1, 2);
+      switch (enemyType) {
+        case 1:
+          enemy = new Ennemy1(this, x, y, "ennemy1");
+          break;
+        case 2:
+          enemy = new Ennemy2(this, x, y, "ennemy2");
+          break;
+      }
+    } else if (this.stageIndex === 2 || this.stageIndex === 3) {
+      const enemyType = Phaser.Math.Between(1, 3);
+      switch (enemyType) {
+        case 1:
+          enemy = new Ennemy1(this, x, y, "ennemy1");
+          break;
+        case 2:
+          enemy = new Ennemy2(this, x, y, "ennemy2");
+          break;
+        case 3:
+          enemy = new Ennemy3(this, x, y, "ennemy3");
+          break;
+      }
+    } else if (this.stageIndex === 4 || this.stageIndex === 5) {
+      const enemyType = Phaser.Math.Between(1, 4);
+      switch (enemyType) {
+        case 1:
+          enemy = new Ennemy1(this, x, y, "ennemy1");
+          break;
+        case 2:
+          enemy = new Ennemy2(this, x, y, "ennemy2");
+          break;
+        case 3:
+          enemy = new Ennemy3(this, x, y, "ennemy3");
+          break;
+        case 4:
+          enemy = new Ennemy4(this, x, y, "ennemy4");
+          break;
+      }
+    } else {
+      const enemyType = Phaser.Math.Between(1, 5);
+      switch (enemyType) {
+        case 1:
+          enemy = new Ennemy1(this, x, y, "ennemy1");
+          break;
+        case 2:
+          enemy = new Ennemy2(this, x, y, "ennemy2");
+          break;
+        case 3:
+          enemy = new Ennemy3(this, x, y, "ennemy3");
+          break;
+        case 4:
+          enemy = new Ennemy4(this, x, y, "ennemy4");
+          break;
+        case 5:
+          enemy = new Ennemy5(this, x, y, "ennemy5");
+          break;
+      }
+    }
+
+    this.ennemies.add(enemy);
   }
 
   physicsOverlapCirc(x, y, radius, callback) {
