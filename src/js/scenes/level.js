@@ -4,6 +4,7 @@ import Ennemy2 from "../objects/ennemy2.js";
 import Ennemy3 from "../objects/ennemy3.js";
 import Ennemy4 from "../objects/ennemy4.js";
 import Ennemy5 from "../objects/ennemy5.js";
+import Boss from "../objects/boss.js";
 
 export default class Level extends Phaser.Scene {
   constructor() {
@@ -29,6 +30,8 @@ export default class Level extends Phaser.Scene {
       frameWidth: 64,
       frameHeight: 64,
     });
+    this.load.image("boss", "src/assets/boss.png");
+    this.load.image("fireWall", "src/assets/fireWall.jpeg");
     this.load.image("upgrade1", "src/assets/upgrade1.png");
     this.load.image("upgrade2", "src/assets/upgrade2.png");
     this.load.image("upgrade3", "src/assets/upgrade3.png");
@@ -45,7 +48,7 @@ export default class Level extends Phaser.Scene {
     this.ennemies.add(new Ennemy3(this, 300, 300, "ennemy3"));
     this.ennemies.add(new Ennemy4(this, 400, 100, "ennemy4"));
     this.ennemies.add(new Ennemy5(this, 500, 200, "ennemy5"));
-
+    // this.ennemies.add(new Boss(this, width / 2, 100, "boss"));
     this.projectiles = this.physics.add.group();
     this.explosions = this.add.group();
 

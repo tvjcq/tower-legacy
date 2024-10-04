@@ -7,8 +7,8 @@ export default class Upgrade {
     this.sprite.on("pointerdown", () => {
       this.applyEffect();
       this.destroy();
-      this.scene.scene.resume("Level");
       this.scene.scene.stop();
+      this.scene.scene.resume("Level");
     });
   }
 

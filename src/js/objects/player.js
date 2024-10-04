@@ -239,7 +239,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         enemy.health -= this.damage;
         this.scene.cameras.main.shake(100, 0.01);
         const blood = this.scene.add.sprite(enemy.x, enemy.y, "blood");
-        blood.setScale(1.5);
+        blood.setScale(enemy.scaleX * 25, enemy.scaleY * 25);
         blood.play("bloodAnim");
         if (enemy.health <= 0) {
           enemy.dead();
