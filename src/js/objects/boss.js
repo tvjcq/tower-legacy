@@ -43,9 +43,10 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
   chooseRandomAttack(player) {
     console.log("chooseRandomAttack");
     const attacks = [
-      this.attack1,
-      this.attack2,
-      // this.attack3, this.attack4
+      // this.attack1,
+      // this.attack2,
+      this.attack3,
+      // this.attack4
     ];
     const randomAttack = Phaser.Math.RND.pick(attacks);
     randomAttack.call(this, player);
@@ -58,6 +59,7 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
   }
 
   attack2(player) {
+    // TODO : Faire que ce sois des ennemies de terre qui spawn
     console.log("attack2");
     this.attacking = true;
 
@@ -121,9 +123,69 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
   attack3(player) {
     console.log("attack3");
     this.attacking = true;
-    // Implémentez l'attaque 3 ici
-    // Simuler la fin de l'attaque après un délai
-    this.scene.time.delayedCall(1000, () => {
+    // TODO : Attaque de vent avec des tornades (zone ronde un peu partout, font des dégats sur la durée et se dirige vers le joueur lentement)
+
+    const numTornados = Phaser.Math.Between(3, 5); // Nombre aléatoire de tornades
+    const tornadoSpeed = 50; // Vitesse de la tornade
+    const tornadoDamage = 1; // Dégâts infligés par la tornade
+    const tornadoDuration = 5000; // Durée de vie des tornades (5 secondes)
+    const tornados = []; // Tableau pour stocker les tornades
+
+    // Générer plusieurs tornades
+    for (let i = 0; i < numTornados; i++) {
+      // Position aléatoire autour du joueur
+      const angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+      const distance = Phaser.Math.Between(200, 300); // Distance initiale de la tornade
+      const tornadoX = player.x + Math.cos(angle) * distance;
+      const tornadoY = player.y + Math.sin(angle) * distance;
+
+      // Créer une tornade
+      const tornado = this.scene.physics.add.sprite(
+        tornadoX,
+        tornadoY,
+        "tornado"
+      );
+      tornado.setScale(0.1); // Ajuster l'échelle de la tornade
+      tornado.setAlpha(0.8); // Légèrement transparente pour l'effet visuel
+      tornados.push(tornado); // Ajouter la tornade au tableau
+
+      // Gérer les dégâts de la tornade si elle touche le joueur
+      const damageLoop = this.scene.time.addEvent({
+        delay: 500, // Les dégâts sont infligés toutes les 0.5 secondes si le joueur est à l'intérieur
+        callback: () => {
+          if (this.scene.physics.overlap(tornado, player)) {
+            player.takeDamage(tornadoDamage); // Infliger des dégâts au joueur
+          }
+        },
+        loop: true,
+      });
+
+      // Détruire la tornade après sa durée de vie
+      this.scene.time.delayedCall(tornadoDuration, () => {
+        tornado.destroy();
+        damageLoop.remove(false); // Arrêter les dégâts de la tornade
+      });
+    }
+
+    // Faire suivre les tornades au joueur en continu
+    this.scene.time.addEvent({
+      delay: 100, // Actualiser la direction des tornades toutes les 0.1 secondes
+      callback: () => {
+        tornados.forEach((tornado) => {
+          if (tornado.active) {
+            this.scene.physics.moveTo(
+              tornado,
+              player.x,
+              player.y,
+              tornadoSpeed
+            );
+          }
+        });
+      },
+      loop: true,
+    });
+
+    this.scene.time.delayedCall(2500, () => {
       this.attacking = false;
     });
   }
@@ -131,6 +193,7 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
   attack4(player) {
     console.log("attack4");
     this.attacking = true;
+    // TODO : Attaque d'eau, geysers qui sortent du sol et font des dégats d'un seul coup (un peu comme l'explosion de l'ennemi 4)
     // Implémentez l'attaque 4 ici
     // Simuler la fin de l'attaque après un délai
     this.scene.time.delayedCall(1000, () => {
@@ -157,7 +220,9 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
       if (!this.scene || !this.active) return;
       if (spawnCount >= 6) {
         this.attackingFireWall = false;
-        this.attacking = false;
+        this.scene.time.delayedCall(1000, () => {
+          this.attacking = false;
+        });
         return;
       }
 
@@ -178,7 +243,7 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
       wall.setScale(1.1, 0.5); // Ajustez l'échelle pour que le mur soit plus large et moins haut
       wall.setVelocityY(200); // Ajustez la vitesse de descente du mur
       wall.setSize(wall.width, 50, true);
-      wall.setOffset(0, wall.height - 50); // Ajustez l'offset pour centrer le hitbox verticalement
+      wall.setOffset(0, wall.height - 50); // Ajustez l'offset pour que la collision se fasse au bas du mur
 
       // Détecter les collisions avec le joueur
       this.scene.physics.add.overlap(wall, player, () => {
