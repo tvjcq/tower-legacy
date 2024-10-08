@@ -139,6 +139,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       // Réinitialiser l'échelle lorsque le joueur ne se déplace pas
       this.setScale(0.025);
     }
+
     this.updateAttackCone(this.angle);
 
     if (pointer.isDown) {
@@ -155,7 +156,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     this.scene.physics.overlap(this, this.scene.ennemies, (player, ennemy) => {
       if (!(ennemy instanceof Ennemy4)) {
-        // Ignorer les dégâts de l'ennemi 4
         this.takeDamage(ennemy.damage);
       }
     });

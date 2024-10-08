@@ -43,8 +43,9 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
   chooseRandomAttack(player) {
     console.log("chooseRandomAttack");
     const attacks = [
-      // this.attack1,
-      // this.attack2,
+      // ! Penser à décommenter les attaques
+      this.attack1,
+      this.attack2,
       this.attack3,
       // this.attack4
     ];
@@ -145,8 +146,8 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
         tornadoY,
         "tornado"
       );
-      tornado.setScale(0.1); // Ajuster l'échelle de la tornade
-      tornado.setAlpha(0.8); // Légèrement transparente pour l'effet visuel
+      tornado.setScale(0.1); // ! Ajuster l'échelle de la tornade
+      tornado.setAlpha(0.8); // Légèrement transparent pour un effet visuel
       tornados.push(tornado); // Ajouter la tornade au tableau
 
       // Gérer les dégâts de la tornade si elle touche le joueur

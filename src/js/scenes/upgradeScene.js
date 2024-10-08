@@ -34,5 +34,10 @@ export default class UpgradeScene extends Phaser.Scene {
         upgrade.effect
       );
     });
+
+    // Écouter l'événement de sélection d'amélioration
+    this.events.on("upgradeSelected", () => {
+      this.scene.stop(); // Fermer la scène des améliorations
+    });
   }
 }

@@ -1,5 +1,3 @@
-import Player from "../objects/player.js";
-
 export default class Interface extends Phaser.Scene {
   constructor() {
     super({ key: "Interface" });
@@ -47,5 +45,71 @@ export default class Interface extends Phaser.Scene {
     this.healthBar.strokeRect(20, 20, 250, 35);
 
     this.healthText.setText(`${this.player.health}/${this.player.maxHealth}`);
+  }
+
+  showStageText(stage, callback) {
+    const stageText = this.add
+      .text(
+        this.cameras.main.centerX,
+        this.cameras.main.centerY - 150,
+        `Étage ${stage}`,
+        {
+          fontSize: "48px",
+          fontFamily: "Riffic",
+          stroke: "#000000",
+          strokeThickness: 5,
+          fill: "#ffffff",
+        }
+      )
+      .setOrigin(0.5);
+
+    // Faire disparaître le texte après 2 secondes
+    // Faire apparaître le texte avec un fondu
+    this.tweens.add({
+      targets: stageText,
+      alpha: { from: 0, to: 1 },
+      duration: 1000,
+      onComplete: () => {
+        // Transformer le texte en rouge après l'apparition
+        this.tweens.addCounter({
+          from: 0,
+          to: 100,
+          duration: 1500,
+          onUpdate: (tween) => {
+            const value = tween.getValue();
+            const color = Phaser.Display.Color.Interpolate.ColorWithColor(
+              Phaser.Display.Color.ValueToColor("#ffffff"),
+              Phaser.Display.Color.ValueToColor("#b8001f"),
+              100,
+              value
+            );
+            stageText.setColor(
+              Phaser.Display.Color.RGBToString(
+                color.r,
+                color.g,
+                color.b,
+                color.a
+              )
+            );
+          },
+          onComplete: () => {
+            // Faire disparaître le texte avec un fondu après 1 seconde
+            this.time.delayedCall(1000, () => {
+              this.tweens.add({
+                targets: stageText,
+                alpha: { from: 1, to: 0 },
+                duration: 1000,
+                onComplete: () => {
+                  stageText.destroy();
+                  if (callback) {
+                    callback();
+                  }
+                },
+              });
+            });
+          },
+        });
+      },
+    });
   }
 }

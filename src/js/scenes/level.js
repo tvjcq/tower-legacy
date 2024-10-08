@@ -49,7 +49,7 @@ export default class Level extends Phaser.Scene {
     // this.ennemies.add(new Ennemy3(this, 300, 300, "ennemy3"));
     // this.ennemies.add(new Ennemy4(this, 400, 100, "ennemy4"));
     // this.ennemies.add(new Ennemy5(this, 500, 200, "ennemy5"));
-    this.ennemies.add(new Boss(this, width / 2, 100, "boss"));
+    // this.ennemies.add(new Boss(this, width / 2, 100, "boss"));
     this.projectiles = this.physics.add.group();
     this.explosions = this.add.group();
 
@@ -76,7 +76,7 @@ export default class Level extends Phaser.Scene {
     // Initialiser les étages et les vagues
     this.stageIndex = 0;
     this.totalStages = 10; // 10 étages
-    this.wavesPerStage = 5; // 5 vagues par étage
+    this.wavesPerStage = 2; // 2 vagues par étage le premier étage puis +1 tout les 2 étages
     this.enemiesPerWave = [3, 4, 5, 6]; // Nombre d'ennemis par vague
     this.waveInterval = 5000; // Intervalle entre chaque vague en millisecondes
     this.spawnInterval = 100; // Intervalle de spawn en millisecondes
@@ -85,7 +85,7 @@ export default class Level extends Phaser.Scene {
     this.isWaveActive = false;
     this.isStageActive = false;
 
-    // this.startNextStage(); // ! À décommenter pour lancer le jeu
+    this.startNextStage(); // ! À décommenter pour lancer le jeu
 
     this.anims.create({
       key: "bloodAnim",
@@ -127,9 +127,9 @@ export default class Level extends Phaser.Scene {
     if (
       this.isStageActive &&
       this.ennemies.countActive(true) === 0 && // Vérifier si tous les ennemis sont morts
-      this.waveIndex >= this.wavesPerStage && // Vérifier si toutes les vagues ont été lancées
-      this.spawnedEnemiesInStage >= this.totalEnemiesInStage // Vérifier si tous les ennemis de l'étage ont été spawnés
+      this.waveIndex >= this.wavesPerStage
     ) {
+      console.log("Tous les ennemis de l'étage ont été éliminés !");
       this.isStageActive = false;
       this.stageIndex++;
       this.startNextStage(); // Passer au prochain étage uniquement si toutes les conditions sont remplies
@@ -137,6 +137,9 @@ export default class Level extends Phaser.Scene {
   }
 
   startNextStage() {
+    console.log(
+      `Étape actuelle: ${this.stageIndex}, Étapes totales: ${this.totalStages}`
+    );
     if (this.stageIndex >= this.totalStages) {
       console.log("Tous les étages ont été complétés !");
       return;
@@ -144,21 +147,36 @@ export default class Level extends Phaser.Scene {
 
     if (!this.isStageActive && this.stageIndex > 0) {
       // Si l'étage est terminé, afficher les améliorations
-      this.showUpgrades();
+      this.showUpgrades(() => {
+        // Afficher le texte de l'étage après la sélection des améliorations
+        this.scene.get("Interface").showStageText(this.stageIndex + 1, () => {
+          this.startNextWave();
+        });
+      });
     }
 
     console.log(`Début de l'étage ${this.stageIndex + 1}`);
 
     this.waveIndex = 0;
-    this.totalEnemiesInStage = 20; // Exemple : 20 ennemis par étage
-    this.spawnedEnemiesInStage = 0;
-    this.remainingEnemiesInStage = this.totalEnemiesInStage;
+
+    if (this.stageIndex % 2 === 0 && this.stageIndex > 0) {
+      this.wavesPerStage++;
+    }
 
     this.isStageActive = true;
-    this.startNextWave();
+
+    // Afficher le texte de l'étage avant de lancer la première vague
+    if (this.stageIndex == 0) {
+      this.scene.get("Interface").showStageText(this.stageIndex + 1, () => {
+        this.startNextWave();
+      });
+    }
   }
 
   startNextWave() {
+    console.log(
+      `Vague actuelle: ${this.waveIndex}, Vagues par étage: ${this.wavesPerStage}`
+    );
     if (this.waveIndex >= this.wavesPerStage) {
       console.log("Toutes les vagues de l'étage ont été complétées !");
       return; // Ne plus lancer de nouvelles vagues pour cet étage
@@ -187,10 +205,7 @@ export default class Level extends Phaser.Scene {
   }
 
   spawnEnemy() {
-    if (
-      this.spawnedEnemiesInWave >= this.currentWaveEnemies ||
-      this.spawnedEnemiesInStage >= this.totalEnemiesInStage
-    ) {
+    if (this.spawnedEnemiesInWave >= this.currentWaveEnemies) {
       return;
     }
 
@@ -218,7 +233,6 @@ export default class Level extends Phaser.Scene {
     });
 
     this.spawnedEnemiesInWave++;
-    this.spawnedEnemiesInStage++;
   }
 
   createEnemy(x, y) {
@@ -293,11 +307,22 @@ export default class Level extends Phaser.Scene {
     });
   }
 
-  showUpgrades() {
+  showUpgrades(callback) {
     // Mettre le jeu en pause
     this.scene.pause();
 
     // Lancer la scène des améliorations
     this.scene.launch("UpgradeScene", { player: this.player });
+
+    // Écouter l'événement de fermeture de la scène des améliorations
+    this.scene.get("UpgradeScene").events.once("shutdown", () => {
+      // Reprendre le jeu
+      this.scene.resume();
+
+      // Appeler le callback pour lancer l'animation de texte de l'étage
+      if (callback) {
+        callback();
+      }
+    });
   }
 }
