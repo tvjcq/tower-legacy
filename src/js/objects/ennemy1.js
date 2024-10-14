@@ -5,7 +5,7 @@ export default class Ennemy1 extends Phaser.Physics.Arcade.Sprite {
     this.scene.add.existing(this);
     this.scene.physics.add.existing(this);
     this.setCollideWorldBounds(true);
-    this.setScale(0.08); // ! À CHANGER
+    this.setScale(0.1); // ! À CHANGER
 
     this.damage = 2;
     this.health = 7;
@@ -48,9 +48,9 @@ export default class Ennemy1 extends Phaser.Physics.Arcade.Sprite {
       if (speed > 0) {
         const scaleFactor = 1 + (speed / this.speed) * 0.2;
         const time = this.scene.time.now / 100;
-        this.setScale(0.08, 0.08 * (1 + 0.1 * Math.sin(time) * scaleFactor));
+        this.setScale(0.1, 0.1 * (1 + 0.1 * Math.sin(time) * scaleFactor));
       } else {
-        this.setScale(0.08);
+        this.setScale(0.1);
       }
     }
   }

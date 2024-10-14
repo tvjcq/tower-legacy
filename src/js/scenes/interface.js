@@ -54,7 +54,7 @@ export default class Interface extends Phaser.Scene {
         this.cameras.main.centerY - 150,
         `Étage ${stage}`,
         {
-          fontSize: "48px",
+          fontSize: "96px",
           fontFamily: "Riffic",
           stroke: "#000000",
           strokeThickness: 5,
@@ -70,44 +70,47 @@ export default class Interface extends Phaser.Scene {
       alpha: { from: 0, to: 1 },
       duration: 1000,
       onComplete: () => {
-        // Transformer le texte en rouge après l'apparition
-        this.tweens.addCounter({
-          from: 0,
-          to: 100,
-          duration: 1500,
-          onUpdate: (tween) => {
-            const value = tween.getValue();
-            const color = Phaser.Display.Color.Interpolate.ColorWithColor(
-              Phaser.Display.Color.ValueToColor("#ffffff"),
-              Phaser.Display.Color.ValueToColor("#b8001f"),
-              100,
-              value
-            );
-            stageText.setColor(
-              Phaser.Display.Color.RGBToString(
-                color.r,
-                color.g,
-                color.b,
-                color.a
-              )
-            );
-          },
-          onComplete: () => {
-            // Faire disparaître le texte avec un fondu après 1 seconde
-            this.time.delayedCall(1000, () => {
-              this.tweens.add({
-                targets: stageText,
-                alpha: { from: 1, to: 0 },
-                duration: 1000,
-                onComplete: () => {
-                  stageText.destroy();
-                  if (callback) {
-                    callback();
-                  }
-                },
+        // Attendre 0.5s avant de changer la couleur du texte
+        this.time.delayedCall(500, () => {
+          // Transformer le texte en rouge après l'apparition
+          this.tweens.addCounter({
+            from: 0,
+            to: 100,
+            duration: 1500,
+            onUpdate: (tween) => {
+              const value = tween.getValue();
+              const color = Phaser.Display.Color.Interpolate.ColorWithColor(
+                Phaser.Display.Color.ValueToColor("#ffffff"),
+                Phaser.Display.Color.ValueToColor("#b8001f"),
+                100,
+                value
+              );
+              stageText.setColor(
+                Phaser.Display.Color.RGBToString(
+                  color.r,
+                  color.g,
+                  color.b,
+                  color.a
+                )
+              );
+            },
+            onComplete: () => {
+              // Faire disparaître le texte avec un fondu après 1 seconde
+              this.time.delayedCall(1000, () => {
+                this.tweens.add({
+                  targets: stageText,
+                  alpha: { from: 1, to: 0 },
+                  duration: 1000,
+                  onComplete: () => {
+                    stageText.destroy();
+                    if (callback) {
+                      callback();
+                    }
+                  },
+                });
               });
-            });
-          },
+            },
+          });
         });
       },
     });

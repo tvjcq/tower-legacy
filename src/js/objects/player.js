@@ -7,7 +7,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.scene.add.existing(this);
     this.scene.physics.add.existing(this);
     this.setCollideWorldBounds(true);
-    this.setScale(0.025); // ! À CHANGER
+    this.setScale(0.2); // ! À CHANGER
+    this.setSize(150, 500); // Ajustez les valeurs selon vos besoins
 
     this.damage = 5;
     this.maxHealth = 10;
@@ -134,10 +135,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (speed > 0) {
       const scaleFactor = 1 + (speed / maxSpeed) * 0.2; // Ajuster le facteur de déformation
       const time = this.scene.time.now / 50; // Ajuster la vitesse de l'animation
-      this.setScale(0.025, 0.025 * (1 + 0.1 * Math.sin(time) * scaleFactor));
+      this.setScale(0.2, 0.2 * (1 + 0.1 * Math.sin(time) * scaleFactor));
     } else {
       // Réinitialiser l'échelle lorsque le joueur ne se déplace pas
-      this.setScale(0.025);
+      this.setScale(0.2);
     }
 
     this.updateAttackCone(this.angle);
@@ -234,7 +235,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
       if (
         distance <= this.whipLength + 20 &&
-        Math.abs(angleDifference) <= Phaser.Math.DegToRad(this.whipAngle / 2)
+        Math.abs(angleDifference) <=
+          Phaser.Math.DegToRad(this.whipAngle / 2 + 10)
       ) {
         enemy.health -= this.damage;
         this.scene.cameras.main.shake(100, 0.01);

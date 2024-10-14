@@ -30,6 +30,7 @@ export default class Level extends Phaser.Scene {
       frameWidth: 64,
       frameHeight: 64,
     });
+    this.load.image("portal", "src/assets/portal.png");
     this.load.image("boss", "src/assets/boss.png");
     this.load.image("fireWall", "src/assets/fireWall.jpeg");
     this.load.image("tornado", "src/assets/tornado.jpg");
@@ -65,19 +66,11 @@ export default class Level extends Phaser.Scene {
     // Gérer la souris
     this.pointer = this.input.activePointer;
 
-    // Afficher les upgrades toutes les 10 secondes
-    // this.time.addEvent({
-    //   delay: 10000,
-    //   loop: true,
-    //   callback: this.showUpgrades,
-    //   callbackScope: this,
-    // });
-
     // Initialiser les étages et les vagues
     this.stageIndex = 0;
     this.totalStages = 10; // 10 étages
     this.wavesPerStage = 2; // 2 vagues par étage le premier étage puis +1 tout les 2 étages
-    this.enemiesPerWave = [3, 4, 5, 6]; // Nombre d'ennemis par vague
+    this.enemiesPerWave = [2, 3, 4, 5]; // Nombre d'ennemis par vague
     this.waveInterval = 5000; // Intervalle entre chaque vague en millisecondes
     this.spawnInterval = 100; // Intervalle de spawn en millisecondes
     this.spawnRadius = 300; // Rayon de spawn autour du joueur
@@ -227,6 +220,15 @@ export default class Level extends Phaser.Scene {
 
     // Créer un portail avant de faire apparaître l'ennemi
     const portal = this.add.sprite(x, y, "portal");
+    portal.setScale(0.1);
+    this.tweens.add({
+      targets: portal,
+      alpha: 0.5,
+      duration: 500,
+      ease: "Cubic.easeInOut",
+      yoyo: true,
+      repeat: -1,
+    });
     this.time.delayedCall(1000, () => {
       portal.destroy();
       this.createEnemy(x, y);
