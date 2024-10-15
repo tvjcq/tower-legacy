@@ -77,7 +77,6 @@ export default class Ennemy2 extends Phaser.Physics.Arcade.Sprite {
       } else {
         this.shoot(player);
       }
-      z;
     }
   }
 
