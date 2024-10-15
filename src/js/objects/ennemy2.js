@@ -5,7 +5,7 @@ export default class Ennemy2 extends Phaser.Physics.Arcade.Sprite {
     this.scene.add.existing(this);
     this.scene.physics.add.existing(this);
     this.setCollideWorldBounds(true);
-    this.setScale(0.08); // ! À CHANGER
+    this.setScale(0.2); // ! À CHANGER
 
     this.damage = 4;
     this.health = 9;
@@ -14,6 +14,7 @@ export default class Ennemy2 extends Phaser.Physics.Arcade.Sprite {
     this.shootDelay = 5000;
     this.canShoot = true;
     this.projectileSpeed = 75;
+    this.firstShoot = true;
 
     this.knockbackX = 0;
     this.knockbackY = 0;
@@ -55,13 +56,24 @@ export default class Ennemy2 extends Phaser.Physics.Arcade.Sprite {
       if (speed > 0) {
         const scaleFactor = 1 + (speed / this.speed) * 0.2;
         const time = this.scene.time.now / 100;
-        this.setScale(0.08, 0.08 * (1 + 0.1 * Math.sin(time) * scaleFactor));
+        this.setScale(0.15, 0.15 * (1 + 0.1 * Math.sin(time) * scaleFactor));
       } else {
-        this.setScale(0.08);
+        this.setScale(0.15);
       }
 
+      let firstShootDelay = Phaser.Math.Between(500, 2500);
       // Tirer
-      this.shoot(player);
+      if (this.firstShoot) {
+        this.scene.time.addEvent({
+          delay: firstShootDelay,
+          callback: () => {
+            this.shoot(player);
+            this.firstShoot = false;
+          },
+        });
+      } else {
+        this.shoot(player);
+      }
     }
   }
 

@@ -87,9 +87,11 @@ export default class Level extends Phaser.Scene {
     // Ajouter les collisions entre le joueur et les murs
     this.physics.add.collider(this.player, wallsLayer);
     this.scene.launch("Interface", { player: this.player });
-    this.ennemies = this.physics.add.group();
 
-    this.cameras.main.startFollow(this.player);
+    this.ennemies = this.physics.add.group();
+    this.physics.add.collider(this.ennemies, wallsLayer);
+
+    this.cameras.main.startFollow(this.player, false, 0.05, 0.05);
     this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
     this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 
@@ -163,7 +165,8 @@ export default class Level extends Phaser.Scene {
     if (
       this.isStageActive &&
       this.ennemies.countActive(true) === 0 && // Vérifier si tous les ennemis sont morts
-      this.waveIndex >= this.wavesPerStage
+      this.waveIndex >= this.wavesPerStage &&
+      !this.isWaveActive
     ) {
       console.log("Tous les ennemis de l'étage ont été éliminés !");
       this.isStageActive = false;
@@ -262,33 +265,64 @@ export default class Level extends Phaser.Scene {
       return;
     }
 
-    // Déterminer les coins opposés de la salle
-    const spawnPositions = [
-      { x: currentRoom.x + 50, y: currentRoom.y + 50 }, // Haut gauche
-      { x: currentRoom.x + currentRoom.width - 50, y: currentRoom.y + 50 }, // Haut droite
-      { x: currentRoom.x + 50, y: currentRoom.y + currentRoom.height - 50 }, // Bas gauche
-      {
-        x: currentRoom.x + currentRoom.width - 50,
-        y: currentRoom.y + currentRoom.height - 50,
-      }, // Bas droite
-    ];
+    // Déterminer la zone où se trouve le joueur
+    let playerZone;
+    if (playerX < currentRoom.x + currentRoom.width / 2) {
+      if (playerY < currentRoom.y + currentRoom.height / 2) {
+        playerZone = "topLeft";
+      } else {
+        playerZone = "bottomLeft";
+      }
+    } else {
+      if (playerY < currentRoom.y + currentRoom.height / 2) {
+        playerZone = "topRight";
+      } else {
+        playerZone = "bottomRight";
+      }
+    }
 
-    // Filtrer les positions de spawn pour exclure la salle actuelle du joueur
-    const filteredSpawnPositions = spawnPositions.filter(
-      (pos) =>
-        !(
-          playerX >= pos.x - 50 &&
-          playerX <= pos.x + 50 &&
-          playerY >= pos.y - 50 &&
-          playerY <= pos.y + 50
-        )
-    );
+    const margin = 150; // Ajouter une marge pour chaque zone
 
-    // Choisir une position de spawn aléatoire parmi les positions disponibles
-    const spawnPosition = Phaser.Utils.Array.GetRandom(spawnPositions);
+    const zones = {
+      topLeft: {
+        xMin: currentRoom.x + margin,
+        xMax: currentRoom.x + currentRoom.width / 2 - margin,
+        yMin: currentRoom.y + margin,
+        yMax: currentRoom.y + currentRoom.height / 2 - margin,
+      },
+      topRight: {
+        xMin: currentRoom.x + currentRoom.width / 2 + margin,
+        xMax: currentRoom.x + currentRoom.width - margin,
+        yMin: currentRoom.y + margin,
+        yMax: currentRoom.y + currentRoom.height / 2 - margin,
+      },
+      bottomLeft: {
+        xMin: currentRoom.x + margin,
+        xMax: currentRoom.x + currentRoom.width / 2 - margin,
+        yMin: currentRoom.y + currentRoom.height / 2 + margin,
+        yMax: currentRoom.y + currentRoom.height - margin,
+      },
+      bottomRight: {
+        xMin: currentRoom.x + currentRoom.width / 2 + margin,
+        xMax: currentRoom.x + currentRoom.width - margin,
+        yMin: currentRoom.y + currentRoom.height / 2 + margin,
+        yMax: currentRoom.y + currentRoom.height - margin,
+      },
+    };
+
+    // Filtrer les zones de spawn pour exclure la zone actuelle du joueur
+    const spawnZones = Object.keys(zones).filter((zone) => zone !== playerZone);
+
+    // Choisir une zone de spawn aléatoire parmi les zones disponibles
+    const spawnZoneKey = Phaser.Utils.Array.GetRandom(spawnZones);
+    const spawnZone = zones[spawnZoneKey];
+
+    // Choisir une position de spawn aléatoire dans la zone de spawn choisie
+    const spawnX = Phaser.Math.Between(spawnZone.xMin, spawnZone.xMax);
+    const spawnY = Phaser.Math.Between(spawnZone.yMin, spawnZone.yMax);
 
     // Créer un portail avant de faire apparaître l'ennemi
-    const portal = this.add.sprite(spawnPosition.x, spawnPosition.y, "portal");
+    const portal = this.add.sprite(spawnX, spawnY, "portal");
     portal.setScale(0.1);
     this.tweens.add({
       targets: portal,
@@ -300,7 +334,7 @@ export default class Level extends Phaser.Scene {
     });
     this.time.delayedCall(1000, () => {
       portal.destroy();
-      this.createEnemy(spawnPosition.x, spawnPosition.y);
+      this.createEnemy(spawnX, spawnY);
     });
 
     this.spawnedEnemiesInWave++;
