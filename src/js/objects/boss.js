@@ -20,6 +20,8 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
     this.attacking = false;
     this.attackingFireWall = false;
 
+    this.spawnEnnemiesDelay = 5000;
+
     // Démarrer l'attaque après un délai initial
     this.scheduleNextAttack();
   }
@@ -116,7 +118,7 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
     }
 
     // Simuler la fin de l'attaque après un délai
-    this.scene.time.delayedCall(5000, () => {
+    this.scene.time.delayedCall(this.spawnEnnemiesDelay, () => {
       this.attacking = false;
     });
   }
@@ -186,9 +188,7 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
       loop: true,
     });
 
-    this.scene.time.delayedCall(2500, () => {
-      this.attacking = false;
-    });
+    this.attacking = false;
   }
 
   attack4(player) {
@@ -221,9 +221,7 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
       if (!this.scene || !this.active) return;
       if (spawnCount >= 6) {
         this.attackingFireWall = false;
-        this.scene.time.delayedCall(1000, () => {
-          this.attacking = false;
-        });
+        this.attacking = false;
         return;
       }
 

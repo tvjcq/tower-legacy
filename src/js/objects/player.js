@@ -8,7 +8,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.scene.physics.add.existing(this);
     this.setCollideWorldBounds(true);
     this.setScale(0.2); // ! À CHANGER
-    this.setSize(150, 500); // Ajustez les valeurs selon vos besoins
+    this.setSize(150, 250); // Ajustez les valeurs selon vos besoins
+    this.setOffset(185, 250); // Ajustez les valeurs selon vos besoins
 
     this.damage = 5;
     this.maxHealth = 10;
@@ -97,12 +98,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.rollCooldownBar.fillStyle(0x00ff00, 0.5);
         this.rollCooldownBar.fillRect(
           this.x - 25,
-          this.y + 40,
+          this.y + 70,
           50 * cooldownProgress,
           10
         );
         this.rollCooldownBar.lineStyle(2, 0xffffff, 0.5);
-        this.rollCooldownBar.strokeRect(this.x - 25, this.y + 40, 50, 10);
+        this.rollCooldownBar.strokeRect(this.x - 25, this.y + 70, 50, 10);
       } else {
         this.rollCooldownBar.clear();
       }
@@ -117,12 +118,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.rollCooldownBar.fillStyle(0x00ff00, 0.5);
         this.rollCooldownBar.fillRect(
           this.x - 25,
-          this.y + 40,
+          this.y + 70,
           50 * cooldownProgress,
           10
         );
         this.rollCooldownBar.lineStyle(2, 0xffffff, 0.5);
-        this.rollCooldownBar.strokeRect(this.x - 25, this.y + 40, 50, 10);
+        this.rollCooldownBar.strokeRect(this.x - 25, this.y + 70, 50, 10);
       } else {
         this.rollCooldownBar.clear();
       }

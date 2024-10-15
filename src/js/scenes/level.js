@@ -38,18 +38,61 @@ export default class Level extends Phaser.Scene {
     this.load.image("upgrade2", "src/assets/upgrade2.png");
     this.load.image("upgrade3", "src/assets/upgrade3.png");
     this.load.image("upgrade4", "src/assets/upgrade4.png");
+
+    // Charger la carte JSON
+    this.load.tilemapTiledJSON("map", "src/assets/map.json");
+    this.load.image("tiles", "src/assets/tileset.png");
   }
 
   create() {
-    const { width, height } = this.scale;
-    this.player = new Player(this, width / 2, height / 2, "player");
+    // Créer la carte
+    const map = this.make.tilemap({ key: "map" });
+    const tileset = map.addTilesetImage("tileset", "tiles");
+
+    // Créer les couches de la carte
+    const backgroundLayer = map.createLayer("Background", tileset);
+    const groundLayer = map.createLayer("Ground", tileset);
+    const wallsLayer = map.createLayer("Walls", tileset);
+
+    wallsLayer.setCollisionByProperty({ collision: true });
+
+    // Définir les salles et les points de téléportation
+    this.rooms = [
+      { x: 1280, y: 896, width: 1856, height: 1600 },
+      { x: 7552, y: 896, width: 1856, height: 1600 },
+      { x: 1280, y: 3776, width: 1856, height: 1600 },
+      { x: 7552, y: 3776, width: 1856, height: 1600 },
+    ];
+
+    this.rooms.forEach((room) => {
+      const roomRect = this.add.rectangle(
+        room.x + room.width / 2,
+        room.y + room.height / 2,
+        room.width,
+        room.height
+      );
+      roomRect.setStrokeStyle(2, 0x00ff00);
+    });
+
+    // Téléporter le joueur à une salle aléatoire
+    const randomRoom = Phaser.Utils.Array.GetRandom(this.rooms);
+    console.log("Téléportation du joueur à la salle", randomRoom);
+    this.player = new Player(
+      this,
+      randomRoom.x + randomRoom.width / 2,
+      randomRoom.y + randomRoom.height / 2,
+      "player"
+    );
+
+    // Ajouter les collisions entre le joueur et les murs
+    this.physics.add.collider(this.player, wallsLayer);
     this.scene.launch("Interface", { player: this.player });
     this.ennemies = this.physics.add.group();
-    // this.ennemies.add(new Ennemy1(this, 100, 100, "ennemy1"));
-    // this.ennemies.add(new Ennemy2(this, 200, 200, "ennemy2"));
-    // this.ennemies.add(new Ennemy3(this, 300, 300, "ennemy3"));
-    // this.ennemies.add(new Ennemy4(this, 400, 100, "ennemy4"));
-    // this.ennemies.add(new Ennemy5(this, 500, 200, "ennemy5"));
+
+    this.cameras.main.startFollow(this.player);
+    this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+    this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+
     // this.ennemies.add(new Boss(this, width / 2, 100, "boss"));
     this.projectiles = this.physics.add.group();
     this.explosions = this.add.group();
@@ -202,24 +245,50 @@ export default class Level extends Phaser.Scene {
       return;
     }
 
-    const { width, height } = this.scale;
     const playerX = this.player.x;
     const playerY = this.player.y;
 
-    let x, y;
-    do {
-      x = Phaser.Math.Between(
-        playerX - this.spawnRadius,
-        playerX + this.spawnRadius
-      );
-      y = Phaser.Math.Between(
-        playerY - this.spawnRadius,
-        playerY + this.spawnRadius
-      );
-    } while (x < 0 || x > width || y < 0 || y > height);
+    // Déterminer la salle du joueur
+    const currentRoom = this.rooms.find(
+      (room) =>
+        playerX >= room.x &&
+        playerX < room.x + room.width &&
+        playerY >= room.y &&
+        playerY < room.y + room.height
+    );
+
+    if (!currentRoom) {
+      console.error("Le joueur n'est pas dans une salle valide.");
+      return;
+    }
+
+    // Déterminer les coins opposés de la salle
+    const spawnPositions = [
+      { x: currentRoom.x + 50, y: currentRoom.y + 50 }, // Haut gauche
+      { x: currentRoom.x + currentRoom.width - 50, y: currentRoom.y + 50 }, // Haut droite
+      { x: currentRoom.x + 50, y: currentRoom.y + currentRoom.height - 50 }, // Bas gauche
+      {
+        x: currentRoom.x + currentRoom.width - 50,
+        y: currentRoom.y + currentRoom.height - 50,
+      }, // Bas droite
+    ];
+
+    // Filtrer les positions de spawn pour exclure la salle actuelle du joueur
+    const filteredSpawnPositions = spawnPositions.filter(
+      (pos) =>
+        !(
+          playerX >= pos.x - 50 &&
+          playerX <= pos.x + 50 &&
+          playerY >= pos.y - 50 &&
+          playerY <= pos.y + 50
+        )
+    );
+
+    // Choisir une position de spawn aléatoire parmi les positions disponibles
+    const spawnPosition = Phaser.Utils.Array.GetRandom(spawnPositions);
 
     // Créer un portail avant de faire apparaître l'ennemi
-    const portal = this.add.sprite(x, y, "portal");
+    const portal = this.add.sprite(spawnPosition.x, spawnPosition.y, "portal");
     portal.setScale(0.1);
     this.tweens.add({
       targets: portal,
@@ -231,7 +300,7 @@ export default class Level extends Phaser.Scene {
     });
     this.time.delayedCall(1000, () => {
       portal.destroy();
-      this.createEnemy(x, y);
+      this.createEnemy(spawnPosition.x, spawnPosition.y);
     });
 
     this.spawnedEnemiesInWave++;
