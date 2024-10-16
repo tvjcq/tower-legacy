@@ -56,6 +56,9 @@ export default class Level extends Phaser.Scene {
 
     wallsLayer.setCollisionByProperty({ collision: true });
 
+    this.groundLayer = groundLayer;
+    this.wallsLayer = wallsLayer;
+
     // Définir les salles et les points de téléportation
     this.rooms = [
       { x: 1280, y: 896, width: 1856, height: 1600 },
@@ -85,7 +88,14 @@ export default class Level extends Phaser.Scene {
     );
 
     // Ajouter les collisions entre le joueur et les murs
-    this.physics.add.collider(this.player, wallsLayer);
+    this.physics.add.collider(this.player, wallsLayer, () => {
+      if (this.player.rollActive) {
+        this.player.stopRoll();
+      }
+      if (this.player.dashActive) {
+        this.player.stopDash();
+      }
+    });
     this.scene.launch("Interface", { player: this.player });
 
     this.ennemies = this.physics.add.group();

@@ -10,6 +10,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.setScale(0.2); // ! À CHANGER
     this.setSize(150, 250); // Ajustez les valeurs selon vos besoins
     this.setOffset(185, 250); // Ajustez les valeurs selon vos besoins
+    this.setOrigin(0.5, 0.5); // Centrer le point d'origine pour la rotation
+
+    this.spriteAngle = 0; // Propriété pour l'angle de rotation du sprite
 
     this.damage = 5;
     this.maxHealth = 10;
@@ -77,7 +80,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     // Calculer l'angle vers le curseur de la souris
-    this.angle = Phaser.Math.Angle.Between(
+    this.attackAngle = Phaser.Math.Angle.Between(
       this.x,
       this.y,
       pointer.worldX,
@@ -142,8 +145,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       this.setScale(0.2);
     }
 
-    this.updateAttackCone(this.angle);
-
     if (pointer.isDown) {
       this.Attack();
     }
@@ -156,6 +157,19 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       }
     }
 
+    if (this.rollActive) {
+      this.scene.physics.world.collide(this, this.scene.wallsLayer, () => {
+        this.stopRoll();
+      });
+    }
+
+    // Vérification de collision avec les murs pendant le dash
+    if (this.dashActive) {
+      this.scene.physics.world.collide(this, this.scene.wallsLayer, () => {
+        this.stopDash();
+      });
+    }
+
     this.scene.physics.overlap(this, this.scene.ennemies, (player, ennemy) => {
       if (!(ennemy instanceof Ennemy4)) {
         this.takeDamage(ennemy.damage);
@@ -166,35 +180,13 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       this,
       this.scene.projectiles,
       (player, projectile) => {
-        this.takeDamage(projectile.damage);
-        projectile.destroy();
+        if (!this.dashActive) {
+          // Ne pas détruire les projectiles pendant le dash
+          this.takeDamage(projectile.damage);
+          projectile.destroy();
+        }
       }
     );
-  }
-
-  updateAttackCone(angle) {
-    // Effacer le cône d'attaque
-    this.attackCone.clear();
-    // Calculer les points du cône d'attaque
-    const halfAttackAngle = Phaser.Math.DegToRad(this.whipAngle / 2);
-
-    // Définir les points du cône d'attaque
-    const startAngle = angle - halfAttackAngle;
-    const endAngle = angle + halfAttackAngle;
-
-    // Calculer le point de départ légèrement devant le joueur
-    const offsetDistance = 10; // Ajustez cette valeur selon vos besoins
-    const startX = this.x + Math.cos(angle) * offsetDistance;
-    const startY = this.y + Math.sin(angle) * offsetDistance;
-
-    // Créer les points du cône d'attaque
-    const points = [];
-    points.push(new Phaser.Math.Vector2(startX, startY));
-    for (let a = startAngle; a <= endAngle; a += Phaser.Math.DegToRad(1)) {
-      const x = startX + Math.cos(a) * this.whipLength;
-      const y = startY + Math.sin(a) * this.whipLength;
-      points.push(new Phaser.Math.Vector2(x, y));
-    }
   }
 
   Attack() {
@@ -203,7 +195,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     const attackSprite = this.scene.add.sprite(this.x, this.y, "attackSprite");
     attackSprite.setScale(0.4); // Ajuster la taille de l'image
     attackSprite.setOrigin(-0.1, 0.5); // Ajuster l'origine pour que l'image pivote autour du joueur
-    attackSprite.setRotation(this.angle); // Placer l'image dans le même angle que le joueur
+    attackSprite.setRotation(this.attackAngle); // Placer l'image dans le même angle que le joueur
 
     this.scene.tweens.add({
       targets: attackSprite,
@@ -232,7 +224,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         enemy.x,
         enemy.y
       );
-      const angleDifference = Phaser.Math.Angle.Wrap(angleToEnemy - this.angle);
+      const angleDifference = Phaser.Math.Angle.Wrap(
+        angleToEnemy - this.attackAngle
+      );
 
       if (
         distance <= this.whipLength + 20 &&
@@ -280,7 +274,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   roll() {
-    if (this.rollActive) return; // Empêcher la roulade si déjà en cours
+    if (this.rollActive || this.rollCooldownTimer > 0) return; // Empêcher la roulade si déjà en cours ou en cooldown
     console.log("Roulade");
     this.rollActive = true;
 
@@ -292,54 +286,107 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       this.body.velocity
     ).normalize();
 
+    const rotationAngle = rollDirection.x < 0 ? -360 : 360;
+
     // Appliquer la roulade
-    this.scene.tweens.add({
+    this.rollTween = this.scene.tweens.add({
       targets: this,
       x: this.x + rollDirection.x * rollDistance,
       y: this.y + rollDirection.y * rollDistance,
       duration: rollDuration,
       onComplete: () => {
         this.rollCooldownTimer = this.rollCooldown;
-        setTimeout(() => {
-          this.rollActive = false;
-        }, this.rollCooldown);
+        this.rollActive = false;
+      },
+    });
+
+    this.scene.tweens.add({
+      targets: this,
+      spriteAngle: rotationAngle,
+      duration: rollDuration,
+      ease: "Sine.easeInOut",
+      onUpdate: () => {
+        this.setRotation(Phaser.Math.DegToRad(this.spriteAngle));
+      },
+      onComplete: () => {
+        this.spriteAngle = 0; // Réinitialiser l'angle de rotation
+        this.setRotation(0); // Réinitialiser la rotation du sprite
       },
     });
   }
 
+  stopRoll() {
+    if (this.rollActive) {
+      if (this.rollTween) {
+        this.rollTween.stop();
+      }
+      this.rollActive = false;
+      this.rollCooldownTimer = this.rollCooldown;
+      setTimeout(() => {
+        this.rollCooldownTimer = 0;
+      }, this.rollCooldown);
+    }
+  }
+
   dash() {
-    if (this.dashActive) return; // Empêcher le dash si déjà en cours
+    if (this.dashActive || this.dashCooldownTimer > 0) return; // Empêcher le dash si déjà en cours
     console.log("Dash");
     this.dashActive = true;
+    this.invincible = true; // Rendre le joueur invincible pendant le dash
 
     // Calculer la direction du dash
     const dashDirection = new Phaser.Math.Vector2(
       this.body.velocity
     ).normalize();
 
-    const dashSprite = this.scene.add.sprite(this.x, this.y, "dashSprite");
-    dashSprite.setScale(0.4);
-    dashSprite.setOrigin(0, 0.5);
-    dashSprite.setRotation(dashDirection.angle());
+    const dashDistance = this.dashDistance;
+    const dashDuration = 100; // Durée très courte pour donner l'impression de téléportation
 
-    this.scene.tweens.add({
-      targets: dashSprite,
-      alpha: { from: 1, to: 0 },
-      duration: 200,
+    // Appliquer le dash avec easing
+    this.dashTween = this.scene.tweens.add({
+      targets: this,
+      x: this.x + dashDirection.x * dashDistance,
+      y: this.y + dashDirection.y * dashDistance,
+      duration: dashDuration,
+      ease: "Sine.easeInOut", // Ajouter easing
       onComplete: () => {
-        dashSprite.destroy(); // Détruire le sprite après l'animation
+        this.dashCooldownTimer = this.dashCooldown;
+        this.dashActive = false;
+        this.invincible = false; // Rendre le joueur vulnérable après le dash
       },
     });
 
-    // Appliquer le dash
-    this.x += dashDirection.x * this.dashDistance;
-    this.y += dashDirection.y * this.dashDistance;
+    this.scene.time.delayedCall(50, () => {
+      const dashSprite = this.scene.add.sprite(this.x, this.y, "dashSprite");
+      dashSprite.setScale(0.4);
+      dashSprite.setOrigin(0.25, 0.5);
+      dashSprite.setRotation(dashDirection.angle());
 
-    // Mettre à jour le cooldown
+      this.scene.tweens.add({
+        targets: dashSprite,
+        alpha: { from: 1, to: 0 },
+        duration: 200,
+        onComplete: () => {
+          dashSprite.destroy(); // Détruire le sprite après l'animation
+        },
+      });
+    });
+
+    // Vérification de collision avec les murs pendant le dash
+    this.scene.physics.world.collide(this, this.scene.wallsLayer, () => {
+      this.stopDash();
+    });
+  }
+
+  stopDash() {
+    if (this.dashTween) {
+      this.dashTween.stop();
+    }
+    this.dashActive = false;
+    this.invincible = false; // Rendre le joueur vulnérable après le dash
     this.dashCooldownTimer = this.dashCooldown;
     setTimeout(() => {
       this.dashCooldownTimer = 0;
-      this.dashActive = false;
     }, this.dashCooldown);
   }
 }
