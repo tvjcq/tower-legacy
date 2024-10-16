@@ -67,6 +67,8 @@ export default class Level extends Phaser.Scene {
       { x: 7552, y: 3776, width: 1856, height: 1600 },
     ];
 
+    this.lastRoomIndex = -1;
+
     this.rooms.forEach((room) => {
       const roomRect = this.add.rectangle(
         room.x + room.width / 2,
@@ -78,14 +80,20 @@ export default class Level extends Phaser.Scene {
     });
 
     // Téléporter le joueur à une salle aléatoire
-    const randomRoom = Phaser.Utils.Array.GetRandom(this.rooms);
-    console.log("Téléportation du joueur à la salle", randomRoom);
-    this.player = new Player(
-      this,
-      randomRoom.x + randomRoom.width / 2,
-      randomRoom.y + randomRoom.height / 2,
-      "player"
-    );
+    // const randomRoom = Phaser.Utils.Array.GetRandom(this.rooms);
+    // console.log("Téléportation du joueur à la salle", randomRoom);
+    // this.player = new Player(
+    //   this,
+    //   randomRoom.x + randomRoom.width / 2,
+    //   randomRoom.y + randomRoom.height / 2,
+    //   "player"
+    // );
+
+    this.player = new Player(this, 100, 100, "player");
+
+    this.firstTP = true;
+
+    this.teleportPlayerToRoom();
 
     // Ajouter les collisions entre le joueur et les murs
     this.physics.add.collider(this.player, wallsLayer, () => {
@@ -185,6 +193,99 @@ export default class Level extends Phaser.Scene {
     }
   }
 
+  teleportPlayerToRoom() {
+    // Filtrer la salle précédente pour éviter la répétition
+    const availableRooms = this.rooms.filter(
+      (_, index) => index !== this.lastRoomIndex
+    );
+
+    // Choisir une nouvelle salle parmi celles disponibles
+    const randomRoom = Phaser.Utils.Array.GetRandom(availableRooms);
+
+    // Obtenir l'indice de la nouvelle salle
+    this.lastRoomIndex = this.rooms.indexOf(randomRoom);
+
+    this.player.setVelocity(0, 0);
+    this.player.playerControlsEnabled = false;
+
+    if (this.firstTP) {
+      this.firstTP = false;
+      // Téléportation du joueur à la salle choisie
+      console.log("Téléportation du joueur à la salle", randomRoom);
+      this.player.setPosition(
+        randomRoom.x + randomRoom.width / 2,
+        randomRoom.y + randomRoom.height / 2
+      );
+      this.cameras.main.setScroll(
+        this.player.x - this.cameras.main.width / 2,
+        this.player.y - this.cameras.main.height / 2
+      );
+
+      this.cameras.main.zoomTo(1.25, 0);
+
+      // Faire apparaître le joueur avec un effet ressort
+      this.tweens.add({
+        targets: this.player,
+        scale: { from: 0, to: 0.2 }, // Le joueur grandit de 0 à sa taille normale
+        alpha: 1, // Le joueur devient visible (fondu)
+        ease: "Back.easeOut", // Effet ressort
+        duration: 250, // Durée de l'animation (1 seconde)
+        onComplete: () => {
+          // Retour de la caméra au zoom normal après l'animation du joueur
+          this.cameras.main.zoomTo(1, 500, "Cubic.easeInOut"); // Retour au zoom x1 en 0,5 seconde avec un effet ease in out
+
+          // Réactiver les contrôles après l'animation complète
+          this.player.playerControlsEnabled = true;
+        },
+      });
+    } else {
+      // Animation de disparition du joueur
+      this.tweens.add({
+        targets: this.player,
+        scale: { from: 0.2, to: 0 }, // Le joueur rétrécit de sa taille normale à 0
+        ease: "Back.easeIn", // Effet ressort
+        duration: 500, // Durée de l'effet de disparition
+        onComplete: () => {
+          console.log("Téléportation du joueur à la salle", randomRoom);
+          setTimeout(() => {
+            this.player.setPosition(
+              randomRoom.x + randomRoom.width / 2,
+              randomRoom.y + randomRoom.height / 2
+            );
+            this.cameras.main.setScroll(
+              this.player.x - this.cameras.main.width / 2,
+              this.player.y - this.cameras.main.height / 2
+            );
+
+            this.player.setVelocity(0, 0);
+            this.player.setScale(0).setAlpha(0);
+            this.player.playerControlsEnabled = false;
+
+            this.cameras.main.zoomTo(1.25, 0);
+
+            setTimeout(() => {
+              // Faire apparaître le joueur avec un effet ressort
+              this.tweens.add({
+                targets: this.player,
+                scale: { from: 0, to: 0.2 }, // Le joueur grandit de 0 à sa taille normale
+                alpha: 1, // Le joueur devient visible (fondu)
+                ease: "Back.easeOut", // Effet ressort
+                duration: 250, // Durée de l'animation (1 seconde)
+                onComplete: () => {
+                  // Retour de la caméra au zoom normal après l'animation du joueur
+                  this.cameras.main.zoomTo(1, 500, "Cubic.easeInOut"); // Retour au zoom x1 en 0,5 seconde avec un effet ease in out
+
+                  // Réactiver les contrôles après l'animation complète
+                  this.player.playerControlsEnabled = true;
+                },
+              });
+            }, 500);
+          }, 500);
+        },
+      });
+    }
+  }
+
   startNextStage() {
     console.log(
       `Étape actuelle: ${this.stageIndex}, Étapes totales: ${this.totalStages}`
@@ -197,6 +298,7 @@ export default class Level extends Phaser.Scene {
     if (!this.isStageActive && this.stageIndex > 0) {
       // Si l'étage est terminé, afficher les améliorations
       this.showUpgrades(() => {
+        this.teleportPlayerToRoom();
         // Afficher le texte de l'étage après la sélection des améliorations
         this.scene.get("Interface").showStageText(this.stageIndex + 1, () => {
           this.startNextWave();

@@ -44,6 +44,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.dashCooldown = 1500; // Temps de récupération en millisecondes
     this.dashActive = false;
     this.dashCooldownTimer = 0;
+
+    this.playerControlsEnabled = false;
   }
 
   update(cursors, pointer) {
@@ -51,6 +53,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     let velocityY = 0;
 
     // Gérer les contrôles
+    if (!this.playerControlsEnabled) return;
     if (cursors.left.isDown && cursors.right.isDown) {
       velocityX = 0;
     } else if (cursors.left.isDown) {
@@ -89,6 +92,18 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     this.setVelocityX(velocityX);
     this.setVelocityY(velocityY);
+
+    if (pointer.isDown) {
+      this.Attack();
+    }
+
+    if (cursors.space.isDown && (velocityX !== 0 || velocityY !== 0)) {
+      if (!this.dashTaked) {
+        this.roll();
+      } else {
+        this.dash();
+      }
+    }
 
     if (!this.dashTaked) {
       if (this.rollCooldownTimer > 0) {
@@ -143,18 +158,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     } else {
       // Réinitialiser l'échelle lorsque le joueur ne se déplace pas
       this.setScale(0.2);
-    }
-
-    if (pointer.isDown) {
-      this.Attack();
-    }
-
-    if (cursors.space.isDown && (velocityX !== 0 || velocityY !== 0)) {
-      if (!this.dashTaked) {
-        this.roll();
-      } else {
-        this.dash();
-      }
     }
 
     if (this.rollActive) {
