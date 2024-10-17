@@ -71,7 +71,7 @@ export default class UpgradeScene extends Phaser.Scene {
           upgrade.texture
         )
         .setInteractive();
-
+      upgradeCard.setScale(0.25); // Changer la taille des cartes
       console.log(
         `Creating upgrade card ${index + 1} at position:`,
         upgradeCard.x,
@@ -90,7 +90,26 @@ export default class UpgradeScene extends Phaser.Scene {
         },
       });
 
-      upgradeCard.on("pointerdown", () => {
+      upgradeCard.on("pointerover", () => {
+        this.tweens.add({
+          targets: upgradeCard,
+          scale: 0.3,
+          duration: 200,
+          ease: "Power1",
+        });
+        this.input.manager.canvas.style.cursor = "pointer";
+      });
+      upgradeCard.on("pointerout", () => {
+        this.tweens.add({
+          targets: upgradeCard,
+          scale: 0.25,
+          duration: 200,
+          ease: "Power1",
+        });
+        this.input.manager.canvas.style.cursor = "default";
+      });
+
+      upgradeCard.on("pointerup", () => {
         upgrade.effect(this.player);
         this.player.health = this.player.maxHealth;
         console.log(

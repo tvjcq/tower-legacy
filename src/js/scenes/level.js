@@ -62,6 +62,8 @@ export default class Level extends Phaser.Scene {
     this.load.image("upgrade2", "src/assets/upgrade2.png");
     this.load.image("upgrade3", "src/assets/upgrade3.png");
     this.load.image("upgrade4", "src/assets/upgrade4.png");
+    this.load.image("upgrade5", "src/assets/upgrade5.png");
+    this.load.image("upgrade6", "src/assets/upgrade6.png");
 
     // Charger les sons
     this.load.audio("playerHurt", "src/assets/playerHurt.mp3");
