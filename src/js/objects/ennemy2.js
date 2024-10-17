@@ -93,6 +93,9 @@ export default class Ennemy2 extends Phaser.Physics.Arcade.Sprite {
           this.canShoot = true;
         },
       });
+
+      this.scene.sound.play("projectileSound", { volume: 0.1 });
+
       // Créer un projectile
       const projectile = this.scene.projectiles.create(
         this.x,
@@ -125,6 +128,7 @@ export default class Ennemy2 extends Phaser.Physics.Arcade.Sprite {
   }
 
   dead() {
+    this.scene.deathSound();
     this.destroy();
   }
 }

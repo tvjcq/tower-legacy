@@ -46,6 +46,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.dashCooldownTimer = 0;
 
     this.playerControlsEnabled = false;
+
+    this.wandTaked = false;
+    this.playerProjectiles = this.scene.physics.add.group();
+    this.shootDelay = 400; // Délai entre chaque tir en millisecondes
+    this.canShoot = true;
   }
 
   update(cursors, pointer) {
@@ -94,7 +99,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.setVelocityY(velocityY);
 
     if (pointer.isDown) {
-      this.Attack();
+      if (!this.wandTaked) {
+        this.Attack();
+      } else {
+        this.wandAttack(pointer);
+      }
     }
 
     if (cursors.space.isDown && (velocityX !== 0 || velocityY !== 0)) {
@@ -302,6 +311,62 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     });
   }
 
+  wandAttack(pointer) {
+    if (!this.canShoot) return; // Empêcher de tirer si le délai n'est pas écoulé
+
+    // Calculer l'angle entre le joueur et la position de la souris
+    const angle = Phaser.Math.Angle.Between(
+      this.x,
+      this.y,
+      pointer.worldX,
+      pointer.worldY
+    );
+
+    // Créer un projectile à la position du joueur
+    const projectile = this.playerProjectiles.create(
+      this.x,
+      this.y,
+      "wandBullet"
+    );
+    projectile.setScale(0.3);
+    projectile.setSize(125, 125); // Ajustez les valeurs selon vos besoins
+
+    // Définir la vitesse et la direction du projectile
+    const projectileSpeed = 750; // Ajustez la vitesse du projectile si nécessaire
+    this.scene.physics.velocityFromRotation(
+      angle,
+      projectileSpeed,
+      projectile.body.velocity
+    );
+    projectile.angle = Phaser.Math.RadToDeg(angle);
+    projectile.damage = this.damage;
+
+    // Ajouter une animation de rotation au projectile
+    this.scene.tweens.add({
+      targets: projectile,
+      angle: 360,
+      duration: 1000,
+      repeat: -1,
+      ease: "Linear",
+    });
+
+    // Détruire le projectile après un certain temps pour éviter les fuites de mémoire
+    this.scene.time.delayedCall(15000, () => {
+      if (projectile.active) {
+        projectile.destroy();
+      }
+    });
+
+    // Jouer un son de tir si nécessaire
+    // this.scene.sound.play("projectileSound", { volume: 0.1 });
+
+    // Empêcher de tirer pendant le délai
+    this.canShoot = false;
+    this.scene.time.delayedCall(this.shootDelay, () => {
+      this.canShoot = true;
+    });
+  }
+
   takeDamage(damage) {
     if (this.invincible) return;
     this.invincible = true;
@@ -309,8 +374,23 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.health -= damage;
     console.log(this.health);
     if (this.health <= 0) {
-      this.destroy();
+      this.dead();
+    } else {
+      this.scene.sound.play("playerHurt", { volume: 0.2 });
     }
+    const blinkInterval = 250; // Intervalle de clignotement en millisecondes
+    const blinkDuration = 1000; // Durée totale du clignotement en millisecondes
+
+    const blinkTween = this.scene.tweens.add({
+      targets: this,
+      alpha: 0,
+      duration: blinkInterval / 2,
+      yoyo: true,
+      repeat: blinkDuration / blinkInterval - 1,
+      onComplete: () => {
+        this.setAlpha(1); // Réinitialiser l'alpha à 1 après le clignotement
+      },
+    });
 
     this.scene.time.delayedCall(1000, () => {
       this.invincible = false;
@@ -432,5 +512,21 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     setTimeout(() => {
       this.dashCooldownTimer = 0;
     }, this.dashCooldown);
+  }
+
+  dead() {
+    this.playerControlsEnabled = false;
+    this.setVelocity(0, 0);
+    this.scene.cameras.main.shake(100, 0.01);
+    this.scene.sound.play("playerDeath", { volume: 0.2 });
+    this.scene.tweens.add({
+      targets: this,
+      angle: 90,
+      duration: 1000,
+      ease: "Cubic.easeInOut",
+      onComplete: () => {
+        this.scene.scene.start("GameOverScene");
+      },
+    });
   }
 }

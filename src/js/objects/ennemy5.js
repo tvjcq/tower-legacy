@@ -12,6 +12,7 @@ export default class Enemy5 extends Phaser.Physics.Arcade.Sprite {
 
     this.speed = 45;
     this.shootDelay = 3000;
+    this.firstShoot = true;
     this.canShoot = true;
     this.canMove = true;
 
@@ -79,8 +80,19 @@ export default class Enemy5 extends Phaser.Physics.Arcade.Sprite {
         this.setScale(0.15);
       }
 
+      let firstShootDelay = Phaser.Math.Between(500, 2500);
       // Tirer
-      this.shoot(player);
+      if (this.firstShoot) {
+        this.scene.time.addEvent({
+          delay: firstShootDelay,
+          callback: () => {
+            this.shoot(player);
+            this.firstShoot = false;
+          },
+        });
+      } else {
+        this.shoot(player);
+      }
     }
   }
 
@@ -165,6 +177,8 @@ export default class Enemy5 extends Phaser.Physics.Arcade.Sprite {
     laser.setScale(laserLength / laser.width, 1); // Ajuster la longueur du laser
     laser.setRotation(this.lockedLaserAngle);
 
+    this.scene.sound.play("laserSound", { volume: 0.1 });
+
     // Représenter le laser sous forme de polygone pour la détection
     const halfWidth = laserWidth / 2;
     const anglePerpendicular = this.lockedLaserAngle + Math.PI / 2;
@@ -244,6 +258,7 @@ export default class Enemy5 extends Phaser.Physics.Arcade.Sprite {
   }
 
   dead() {
+    this.scene.deathSound();
     this.cleanup();
     this.destroy();
   }

@@ -104,6 +104,8 @@ export default class Ennemy2 extends Phaser.Physics.Arcade.Sprite {
             // Vérifier si l'ennemi existe toujours
             if (!this.scene || !this.active) return;
 
+            this.scene.sound.play("projectileSound", { volume: 0.1 });
+
             // Créer un projectile
             const projectile = this.scene.projectiles.create(
               this.x,
@@ -138,6 +140,7 @@ export default class Ennemy2 extends Phaser.Physics.Arcade.Sprite {
   }
 
   dead() {
+    this.scene.deathSound();
     this.destroy();
   }
 }

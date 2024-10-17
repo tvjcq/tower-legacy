@@ -12,7 +12,7 @@ export default class Menu extends Phaser.Scene {
 
   create() {
     // Jouer la musique du menu
-    this.sound.add("menuMusic", { loop: true }).play();
+    this.sound.add("menuMusic", { loop: true, volume: 0.2 }).play();
     // Afficher l'arrière-plan du menu
     this.add.image(960, 540, "menuBackground");
 

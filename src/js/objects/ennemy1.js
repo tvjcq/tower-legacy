@@ -62,6 +62,7 @@ export default class Ennemy1 extends Phaser.Physics.Arcade.Sprite {
   }
 
   dead() {
+    this.scene.deathSound();
     this.destroy();
   }
 }

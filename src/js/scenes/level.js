@@ -15,6 +15,7 @@ export default class Level extends Phaser.Scene {
     this.load.image("player", "src/assets/playerIdle.png");
     this.load.image("playerAttack", "src/assets/playerAttack.png");
     this.load.image("attackSprite", "src/assets/attackSprite.png");
+    this.load.image("wandBullet", "src/assets/wandBullet.png");
     this.load.image("dashSprite", "src/assets/dashSprite.png");
     this.load.image("ennemy1Fire", "src/assets/ennemy1Fire.png");
     this.load.image("ennemy1Water", "src/assets/ennemy1Water.png");
@@ -63,6 +64,8 @@ export default class Level extends Phaser.Scene {
     this.load.image("upgrade4", "src/assets/upgrade4.png");
 
     // Charger les sons
+    this.load.audio("playerHurt", "src/assets/playerHurt.mp3");
+    this.load.audio("playerDeath", "src/assets/playerDeath.mp3");
     this.load.audio("popSound", "src/assets/popSound.mp3");
     this.load.audio("whoosh1", "src/assets/whooshSound1.mp3");
     this.load.audio("whoosh2", "src/assets/whooshSound2.mp3");
@@ -87,6 +90,14 @@ export default class Level extends Phaser.Scene {
     this.load.audio("hit16", "src/assets/hitSound16.mp3");
     this.load.audio("hit17", "src/assets/hitSound17.mp3");
     this.load.audio("hit18", "src/assets/hitSound18.mp3");
+    this.load.audio("laserSound", "src/assets/laserSound.mp3");
+    this.load.audio("projectileSound", "src/assets/projectileSound.mp3");
+    this.load.audio("monsterDeath1", "src/assets/monsterDeath1.mp3");
+    this.load.audio("monsterDeath2", "src/assets/monsterDeath2.mp3");
+    this.load.audio("monsterDeath3", "src/assets/monsterDeath3.mp3");
+    this.load.audio("monsterDeath4", "src/assets/monsterDeath4.mp3");
+    this.load.audio("monsterDeath5", "src/assets/monsterDeath5.mp3");
+    this.load.audio("monsterDeath6", "src/assets/monsterDeath6.mp3");
 
     // Charger la carte JSON
     this.load.tilemapTiledJSON("map", "src/assets/map.json");
@@ -128,16 +139,6 @@ export default class Level extends Phaser.Scene {
       roomRect.setStrokeStyle(2, 0x00ff00);
     });
 
-    // Téléporter le joueur à une salle aléatoire
-    // const randomRoom = Phaser.Utils.Array.GetRandom(this.rooms);
-    // console.log("Téléportation du joueur à la salle", randomRoom);
-    // this.player = new Player(
-    //   this,
-    //   randomRoom.x + randomRoom.width / 2,
-    //   randomRoom.y + randomRoom.height / 2,
-    //   "player"
-    // );
-
     this.player = new Player(this, 100, 100, "player");
 
     this.firstTP = true;
@@ -161,6 +162,14 @@ export default class Level extends Phaser.Scene {
     this.cameras.main.startFollow(this.player, false, 0.05, 0.05);
     this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
     this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+
+    this.physics.add.overlap(
+      this.player.playerProjectiles,
+      this.ennemies,
+      this.handleProjectileCollision,
+      null,
+      this
+    );
 
     // this.ennemies.add(new Boss(this, width / 2, 100, "boss"));
     this.projectiles = this.physics.add.group();
@@ -578,6 +587,20 @@ export default class Level extends Phaser.Scene {
     });
   }
 
+  handleProjectileCollision(projectile, ennemy) {
+    // Infliger des dégâts à l'ennemi
+    ennemy.health -= projectile.damage;
+    console.log(`Dégâts infligés à l'ennemi : ${projectile.damage}`);
+
+    // Détruire le projectile
+    projectile.destroy();
+
+    // Vérifier si l'ennemi est mort
+    if (ennemy.health <= 0) {
+      ennemy.dead();
+    }
+  }
+
   showUpgrades(callback) {
     // Mettre le jeu en pause
     this.scene.pause();
@@ -595,5 +618,18 @@ export default class Level extends Phaser.Scene {
         callback();
       }
     });
+  }
+
+  deathSound() {
+    const sounds = [
+      "monsterDeath1",
+      "monsterDeath2",
+      "monsterDeath3",
+      "monsterDeath4",
+      "monsterDeath5",
+      "monsterDeath6",
+    ];
+    const randomSound = Phaser.Utils.Array.GetRandom(sounds);
+    this.sound.play(randomSound, { volume: 0.2 });
   }
 }
