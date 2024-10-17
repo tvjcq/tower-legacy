@@ -196,6 +196,17 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (!this.canAttack) return;
     this.canAttack = false;
 
+    const whooshSounds = [
+      this.scene.sound.add("whoosh1"),
+      this.scene.sound.add("whoosh2"),
+      this.scene.sound.add("whoosh3"),
+      this.scene.sound.add("whoosh4"),
+      this.scene.sound.add("whoosh5"),
+    ];
+    const randomWhoosh = Phaser.Math.RND.pick(whooshSounds);
+    randomWhoosh.volume = 0.1;
+    randomWhoosh.play();
+
     this.setTexture("playerAttack");
     this.scene.time.delayedCall(this.attackDuration, () => {
       this.setTexture("player");

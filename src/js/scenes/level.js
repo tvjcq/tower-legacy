@@ -61,6 +61,14 @@ export default class Level extends Phaser.Scene {
     this.load.image("upgrade3", "src/assets/upgrade3.png");
     this.load.image("upgrade4", "src/assets/upgrade4.png");
 
+    // Charger les sons
+    this.load.audio("popSound", "src/assets/popSound.mp3");
+    this.load.audio("whoosh1", "src/assets/whooshSound1.mp3");
+    this.load.audio("whoosh2", "src/assets/whooshSound2.mp3");
+    this.load.audio("whoosh3", "src/assets/whooshSound3.mp3");
+    this.load.audio("whoosh4", "src/assets/whooshSound4.mp3");
+    this.load.audio("whoosh5", "src/assets/whooshSound5.mp3");
+
     // Charger la carte JSON
     this.load.tilemapTiledJSON("map", "src/assets/map.json");
     this.load.image("tiles", "src/assets/tileset.png");
@@ -246,6 +254,7 @@ export default class Level extends Phaser.Scene {
       this.cameras.main.zoomTo(1.25, 0);
 
       // Faire apparaître le joueur avec un effet ressort
+      this.sound.play("popSound");
       this.tweens.add({
         targets: this.player,
         scale: { from: 0, to: 0.2 }, // Le joueur grandit de 0 à sa taille normale
@@ -287,6 +296,7 @@ export default class Level extends Phaser.Scene {
 
             setTimeout(() => {
               // Faire apparaître le joueur avec un effet ressort
+              this.sound.play("popSound");
               this.tweens.add({
                 targets: this.player,
                 scale: { from: 0, to: 0.2 }, // Le joueur grandit de 0 à sa taille normale
