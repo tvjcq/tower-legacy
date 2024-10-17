@@ -10,7 +10,7 @@ export default class Enemy5 extends Phaser.Physics.Arcade.Sprite {
     this.damage = 4;
     this.health = 9;
 
-    this.speed = 25;
+    this.speed = 45;
     this.shootDelay = 3000;
     this.canShoot = true;
     this.canMove = true;
@@ -52,9 +52,9 @@ export default class Enemy5 extends Phaser.Physics.Arcade.Sprite {
 
       // Déplacement en fonction de la distance
       if (this.canMove) {
-        if (distance > 400) {
+        if (distance > 750) {
           this.scene.physics.moveTo(this, player.x, player.y, this.speed);
-        } else if (distance < 350) {
+        } else if (distance < 600) {
           this.scene.physics.moveTo(this, player.x, player.y, -this.speed);
         }
       } else {
@@ -113,8 +113,8 @@ export default class Enemy5 extends Phaser.Physics.Arcade.Sprite {
           this.laserGraphics.beginPath();
           this.laserGraphics.moveTo(startX, startY);
           this.laserGraphics.lineTo(
-            startX + Math.cos(this.laserAngle) * 1000,
-            startY + Math.sin(this.laserAngle) * 1000
+            startX + Math.cos(this.laserAngle) * 2500,
+            startY + Math.sin(this.laserAngle) * 2500
           );
           this.laserGraphics.strokePath();
           this.laserGraphics.closePath();
@@ -152,7 +152,7 @@ export default class Enemy5 extends Phaser.Physics.Arcade.Sprite {
   fireLaser(player) {
     if (!this.scene || !this.active) return;
     // Créer le laser final qui inflige des dégâts au joueur
-    const laserLength = 1000;
+    const laserLength = 2500;
     const offset = 35; // Pour que le laser parte devant l'ennemie et pas depuis le centre
     const laserWidth = 50; // Augmenter l'épaisseur du laser
     const startX = this.x + Math.cos(this.lockedLaserAngle) * offset;
@@ -160,15 +160,10 @@ export default class Enemy5 extends Phaser.Physics.Arcade.Sprite {
     const endX = startX + Math.cos(this.lockedLaserAngle) * laserLength;
     const endY = startY + Math.sin(this.lockedLaserAngle) * laserLength;
 
-    const laser = this.scene.add.graphics({
-      lineStyle: { width: laserWidth, color: 0xff0000 },
-    });
-
-    laser.beginPath();
-    laser.moveTo(startX, startY);
-    laser.lineTo(endX, endY);
-    laser.strokePath();
-    laser.closePath();
+    const laser = this.scene.add.image(startX, startY, "laser");
+    laser.setOrigin(0, 0.5); // Origine à gauche, centré verticalement
+    laser.setScale(laserLength / laser.width, 1); // Ajuster la longueur du laser
+    laser.setRotation(this.lockedLaserAngle);
 
     // Représenter le laser sous forme de polygone pour la détection
     const halfWidth = laserWidth / 2;

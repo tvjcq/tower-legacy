@@ -253,6 +253,30 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         Math.abs(angleDifference) <=
           Phaser.Math.DegToRad(this.whipAngle / 2 + 10)
       ) {
+        const hitSounds = [
+          this.scene.sound.add("hit1"),
+          this.scene.sound.add("hit2"),
+          this.scene.sound.add("hit3"),
+          this.scene.sound.add("hit4"),
+          this.scene.sound.add("hit5"),
+          this.scene.sound.add("hit6"),
+          this.scene.sound.add("hit7"),
+          this.scene.sound.add("hit8"),
+          this.scene.sound.add("hit9"),
+          this.scene.sound.add("hit10"),
+          this.scene.sound.add("hit11"),
+          this.scene.sound.add("hit12"),
+          this.scene.sound.add("hit13"),
+          this.scene.sound.add("hit14"),
+          this.scene.sound.add("hit15"),
+          this.scene.sound.add("hit16"),
+          this.scene.sound.add("hit17"),
+          this.scene.sound.add("hit18"),
+        ];
+        const randomHit = Phaser.Math.RND.pick(hitSounds);
+        randomHit.volume = 0.05;
+        randomHit.play();
+
         enemy.health -= this.damage;
         this.scene.cameras.main.shake(100, 0.01);
         const blood = this.scene.add.sprite(enemy.x, enemy.y, "blood");

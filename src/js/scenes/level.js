@@ -41,6 +41,7 @@ export default class Level extends Phaser.Scene {
     this.load.image("ennemy5Earth", "src/assets/ennemy5Earth.png");
     this.load.image("ennemy5Air", "src/assets/ennemy5Air.png");
     this.load.image("projectile", "src/assets/projectile.png");
+    this.load.image("laser", "src/assets/laser.png");
     this.load.spritesheet("explosion", "src/assets/explosionAnim.png", {
       frameWidth: 65,
       frameHeight: 65,
@@ -68,6 +69,24 @@ export default class Level extends Phaser.Scene {
     this.load.audio("whoosh3", "src/assets/whooshSound3.mp3");
     this.load.audio("whoosh4", "src/assets/whooshSound4.mp3");
     this.load.audio("whoosh5", "src/assets/whooshSound5.mp3");
+    this.load.audio("hit1", "src/assets/hitSound1.mp3");
+    this.load.audio("hit2", "src/assets/hitSound2.mp3");
+    this.load.audio("hit3", "src/assets/hitSound3.mp3");
+    this.load.audio("hit4", "src/assets/hitSound4.mp3");
+    this.load.audio("hit5", "src/assets/hitSound5.mp3");
+    this.load.audio("hit6", "src/assets/hitSound6.mp3");
+    this.load.audio("hit7", "src/assets/hitSound7.mp3");
+    this.load.audio("hit8", "src/assets/hitSound8.mp3");
+    this.load.audio("hit9", "src/assets/hitSound9.mp3");
+    this.load.audio("hit10", "src/assets/hitSound10.mp3");
+    this.load.audio("hit11", "src/assets/hitSound11.mp3");
+    this.load.audio("hit12", "src/assets/hitSound12.mp3");
+    this.load.audio("hit13", "src/assets/hitSound13.mp3");
+    this.load.audio("hit14", "src/assets/hitSound14.mp3");
+    this.load.audio("hit15", "src/assets/hitSound15.mp3");
+    this.load.audio("hit16", "src/assets/hitSound16.mp3");
+    this.load.audio("hit17", "src/assets/hitSound17.mp3");
+    this.load.audio("hit18", "src/assets/hitSound18.mp3");
 
     // Charger la carte JSON
     this.load.tilemapTiledJSON("map", "src/assets/map.json");

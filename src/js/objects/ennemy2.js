@@ -10,7 +10,7 @@ export default class Ennemy2 extends Phaser.Physics.Arcade.Sprite {
     this.damage = 4;
     this.health = 9;
 
-    this.speed = 25;
+    this.speed = 45;
     this.shootDelay = 5000;
     this.canShoot = true;
     this.projectileSpeed = 75;
@@ -42,9 +42,9 @@ export default class Ennemy2 extends Phaser.Physics.Arcade.Sprite {
         player.y
       );
       // Se déplacer vers le joueur
-      if (distance > 350) {
+      if (distance > 650) {
         this.scene.physics.moveTo(this, player.x, player.y, this.speed);
-      } else if (distance < 300) {
+      } else if (distance < 500) {
         this.scene.physics.moveTo(this, player.x, player.y, -this.speed);
       } else {
         this.scene.physics.moveTo(this, player.x, player.y, 0);
@@ -114,6 +114,13 @@ export default class Ennemy2 extends Phaser.Physics.Arcade.Sprite {
       );
       projectile.angle = Phaser.Math.RadToDeg(angle);
       projectile.damage = this.damage;
+
+      // Détruire le projectile après 25 secondes
+      this.scene.time.delayedCall(25000, () => {
+        if (projectile.active) {
+          projectile.destroy();
+        }
+      });
     }
   }
 
