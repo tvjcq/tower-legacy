@@ -68,6 +68,12 @@ export default class Ennemy4 extends Phaser.Physics.Arcade.Sprite {
         });
       }
 
+      if (this.body.velocity.x < 0) {
+        this.setFlipX(true);
+      } else {
+        this.setFlipX(false);
+      }
+
       const speed = Math.sqrt(
         this.body.velocity.x ** 2 + this.body.velocity.y ** 2
       );
@@ -127,10 +133,10 @@ export default class Ennemy4 extends Phaser.Physics.Arcade.Sprite {
 
   blink() {
     if (!this.scene || !this.active) return;
-    if (this.texture.key === "ennemy4") {
-      this.setTexture("ennemy4_blink");
+    if (this.texture.key === `ennemy4${this.scene.textureName}`) {
+      this.setTexture(`ennemy4Blink${this.scene.textureName}`);
     } else {
-      this.setTexture("ennemy4");
+      this.setTexture(`ennemy4${this.scene.textureName}`);
     }
   }
 }

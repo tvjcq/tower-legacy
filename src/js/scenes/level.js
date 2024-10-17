@@ -13,14 +13,33 @@ export default class Level extends Phaser.Scene {
 
   preload() {
     this.load.image("player", "src/assets/playerIdle.png");
+    this.load.image("playerAttack", "src/assets/playerAttack.png");
     this.load.image("attackSprite", "src/assets/attackSprite.png");
     this.load.image("dashSprite", "src/assets/dashSprite.png");
-    this.load.image("ennemy1", "src/assets/ennemy1Idle.png");
-    this.load.image("ennemy2", "src/assets/ennemy2Idle.png");
-    this.load.image("ennemy3", "src/assets/ennemy3Idle.png");
-    this.load.image("ennemy4", "src/assets/ennemy4Idle.png");
-    this.load.image("ennemy4_blink", "src/assets/ennemy4Blink.png");
-    this.load.image("ennemy5", "src/assets/ennemy5Idle.png");
+    this.load.image("ennemy1Fire", "src/assets/ennemy1Fire.png");
+    this.load.image("ennemy1Water", "src/assets/ennemy1Water.png");
+    this.load.image("ennemy1Earth", "src/assets/ennemy1Earth.png");
+    this.load.image("ennemy1Air", "src/assets/ennemy1Air.png");
+    this.load.image("ennemy2Fire", "src/assets/ennemy2Fire.png");
+    this.load.image("ennemy2Water", "src/assets/ennemy2Water.png");
+    this.load.image("ennemy2Earth", "src/assets/ennemy2Earth.png");
+    this.load.image("ennemy2Air", "src/assets/ennemy2Air.png");
+    this.load.image("ennemy3Fire", "src/assets/ennemy3Fire.png");
+    this.load.image("ennemy3Water", "src/assets/ennemy3Water.png");
+    this.load.image("ennemy3Earth", "src/assets/ennemy3Earth.png");
+    this.load.image("ennemy3Air", "src/assets/ennemy3Air.png");
+    this.load.image("ennemy4Fire", "src/assets/ennemy4Fire.png");
+    this.load.image("ennemy4BlinkFire", "src/assets/ennemy4BlinkFire.png");
+    this.load.image("ennemy4Water", "src/assets/ennemy4Water.png");
+    this.load.image("ennemy4BlinkWater", "src/assets/ennemy4BlinkWater.png");
+    this.load.image("ennemy4Earth", "src/assets/ennemy4Earth.png");
+    this.load.image("ennemy4BlinkEarth", "src/assets/ennemy4BlinkEarth.png");
+    this.load.image("ennemy4Air", "src/assets/ennemy4Air.png");
+    this.load.image("ennemy4BlinkAir", "src/assets/ennemy4BlinkAir.png");
+    this.load.image("ennemy5Fire", "src/assets/ennemy5Fire.png");
+    this.load.image("ennemy5Water", "src/assets/ennemy5Water.png");
+    this.load.image("ennemy5Earth", "src/assets/ennemy5Earth.png");
+    this.load.image("ennemy5Air", "src/assets/ennemy5Air.png");
     this.load.image("projectile", "src/assets/projectile.png");
     this.load.spritesheet("explosion", "src/assets/explosionAnim.png", {
       frameWidth: 65,
@@ -30,7 +49,10 @@ export default class Level extends Phaser.Scene {
       frameWidth: 64,
       frameHeight: 64,
     });
-    this.load.image("portal", "src/assets/portal.png");
+    this.load.image("portalFire", "src/assets/portalFire.png");
+    this.load.image("portalWater", "src/assets/portalWater.png");
+    this.load.image("portalEarth", "src/assets/portalEarth.png");
+    this.load.image("portalAir", "src/assets/portalAir.png");
     this.load.image("boss", "src/assets/boss.png");
     this.load.image("fireWall", "src/assets/fireWall.jpeg");
     this.load.image("tornado", "src/assets/tornado.jpg");
@@ -61,10 +83,10 @@ export default class Level extends Phaser.Scene {
 
     // Définir les salles et les points de téléportation
     this.rooms = [
-      { x: 1280, y: 896, width: 1856, height: 1600 },
-      { x: 7552, y: 896, width: 1856, height: 1600 },
-      { x: 1280, y: 3776, width: 1856, height: 1600 },
-      { x: 7552, y: 3776, width: 1856, height: 1600 },
+      { x: 1280, y: 896, width: 1856, height: 1600, name: "Fire" },
+      { x: 7552, y: 896, width: 1856, height: 1600, name: "Air" },
+      { x: 1280, y: 3776, width: 1856, height: 1600, name: "Water" },
+      { x: 7552, y: 3776, width: 1856, height: 1600, name: "Earth" },
     ];
 
     this.lastRoomIndex = -1;
@@ -300,9 +322,11 @@ export default class Level extends Phaser.Scene {
       this.showUpgrades(() => {
         this.teleportPlayerToRoom();
         // Afficher le texte de l'étage après la sélection des améliorations
-        this.scene.get("Interface").showStageText(this.stageIndex + 1, () => {
-          this.startNextWave();
-        });
+        setTimeout(() => {
+          this.scene.get("Interface").showStageText(this.stageIndex + 1, () => {
+            this.startNextWave();
+          });
+        }, 1000);
       });
     }
 
@@ -351,8 +375,6 @@ export default class Level extends Phaser.Scene {
 
     // Démarrer la vague suivante après le délai défini, que les ennemis soient morts ou non
     this.time.delayedCall(this.waveInterval, this.startNextWave, [], this);
-
-    this.waveIndex++;
   }
 
   spawnEnemy() {
@@ -372,10 +394,7 @@ export default class Level extends Phaser.Scene {
         playerY < room.y + room.height
     );
 
-    if (!currentRoom) {
-      console.error("Le joueur n'est pas dans une salle valide.");
-      return;
-    }
+    this.textureName = currentRoom.name;
 
     // Déterminer la zone où se trouve le joueur
     let playerZone;
@@ -434,7 +453,7 @@ export default class Level extends Phaser.Scene {
     const spawnY = Phaser.Math.Between(spawnZone.yMin, spawnZone.yMax);
 
     // Créer un portail avant de faire apparaître l'ennemi
-    const portal = this.add.sprite(spawnX, spawnY, "portal");
+    const portal = this.add.sprite(spawnX, spawnY, `portal${this.textureName}`);
     portal.setScale(0.1);
     this.tweens.add({
       targets: portal,
@@ -450,6 +469,12 @@ export default class Level extends Phaser.Scene {
     });
 
     this.spawnedEnemiesInWave++;
+
+    if (this.spawnedEnemiesInWave === this.currentWaveEnemies) {
+      this.time.delayedCall(4500, () => {
+        this.waveIndex++;
+      });
+    }
   }
 
   createEnemy(x, y) {
@@ -458,58 +483,58 @@ export default class Level extends Phaser.Scene {
       const enemyType = Phaser.Math.Between(1, 2);
       switch (enemyType) {
         case 1:
-          enemy = new Ennemy1(this, x, y, "ennemy1");
+          enemy = new Ennemy1(this, x, y, `ennemy1${this.textureName}`);
           break;
         case 2:
-          enemy = new Ennemy2(this, x, y, "ennemy2");
+          enemy = new Ennemy2(this, x, y, `ennemy2${this.textureName}`);
           break;
       }
     } else if (this.stageIndex === 2 || this.stageIndex === 3) {
       const enemyType = Phaser.Math.Between(1, 3);
       switch (enemyType) {
         case 1:
-          enemy = new Ennemy1(this, x, y, "ennemy1");
+          enemy = new Ennemy1(this, x, y, `ennemy1${this.textureName}`);
           break;
         case 2:
-          enemy = new Ennemy2(this, x, y, "ennemy2");
+          enemy = new Ennemy2(this, x, y, `ennemy2${this.textureName}`);
           break;
         case 3:
-          enemy = new Ennemy3(this, x, y, "ennemy3");
+          enemy = new Ennemy3(this, x, y, `ennemy3${this.textureName}`);
           break;
       }
     } else if (this.stageIndex === 4 || this.stageIndex === 5) {
       const enemyType = Phaser.Math.Between(1, 4);
       switch (enemyType) {
         case 1:
-          enemy = new Ennemy1(this, x, y, "ennemy1");
+          enemy = new Ennemy1(this, x, y, `ennemy1${this.textureName}`);
           break;
         case 2:
-          enemy = new Ennemy2(this, x, y, "ennemy2");
+          enemy = new Ennemy2(this, x, y, `ennemy2${this.textureName}`);
           break;
         case 3:
-          enemy = new Ennemy3(this, x, y, "ennemy3");
+          enemy = new Ennemy3(this, x, y, `ennemy3${this.textureName}`);
           break;
         case 4:
-          enemy = new Ennemy4(this, x, y, "ennemy4");
+          enemy = new Ennemy4(this, x, y, `ennemy4${this.textureName}`);
           break;
       }
     } else {
       const enemyType = Phaser.Math.Between(1, 5);
       switch (enemyType) {
         case 1:
-          enemy = new Ennemy1(this, x, y, "ennemy1");
+          enemy = new Ennemy1(this, x, y, `ennemy1${this.textureName}`);
           break;
         case 2:
-          enemy = new Ennemy2(this, x, y, "ennemy2");
+          enemy = new Ennemy2(this, x, y, `ennemy2${this.textureName}`);
           break;
         case 3:
-          enemy = new Ennemy3(this, x, y, "ennemy3");
+          enemy = new Ennemy3(this, x, y, `ennemy3${this.textureName}`);
           break;
         case 4:
-          enemy = new Ennemy4(this, x, y, "ennemy4");
+          enemy = new Ennemy4(this, x, y, `ennemy4${this.textureName}`);
           break;
         case 5:
-          enemy = new Ennemy5(this, x, y, "ennemy5");
+          enemy = new Ennemy5(this, x, y, `ennemy5${this.textureName}`);
           break;
       }
     }

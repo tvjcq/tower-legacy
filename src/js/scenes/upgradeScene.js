@@ -38,6 +38,11 @@ export default class UpgradeScene extends Phaser.Scene {
       { texture: "upgrade2", effect: (player) => (player.speed += 50) },
       { texture: "upgrade3", effect: (player) => (player.damage += 2) },
       { texture: "upgrade4", effect: (player) => (player.dashTaked = true) },
+      { texture: "upgrade5", effect: (player) => (player.attackDelay -= 100) },
+      {
+        texture: "upgrade6",
+        effect: (player) => (player.whipLength += 25),
+      },
     ];
 
     // Filtrer les upgrades pour exclure l'upgrade 4 si elle est déjà prise

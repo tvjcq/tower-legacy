@@ -195,9 +195,15 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   Attack() {
     if (!this.canAttack) return;
     this.canAttack = false;
+
+    this.setTexture("playerAttack");
+    this.scene.time.delayedCall(this.attackDuration, () => {
+      this.setTexture("player");
+    });
+
     const attackSprite = this.scene.add.sprite(this.x, this.y, "attackSprite");
-    attackSprite.setScale(0.4); // Ajuster la taille de l'image
-    attackSprite.setOrigin(-0.1, 0.5); // Ajuster l'origine pour que l'image pivote autour du joueur
+    attackSprite.setScale(this.whipLength / 500); // Ajuster la taille de l'image
+    attackSprite.setOrigin(0, 0.5); // Ajuster l'origine pour que l'image pivote autour du joueur
     attackSprite.setRotation(this.attackAngle); // Placer l'image dans le même angle que le joueur
 
     this.scene.tweens.add({

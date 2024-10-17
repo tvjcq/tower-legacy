@@ -52,6 +52,12 @@ export default class Ennemy2 extends Phaser.Physics.Arcade.Sprite {
         this.scene.physics.moveTo(this, player.x, player.y, 0);
       }
 
+      if (this.body.velocity.x < 0) {
+        this.setFlipX(true);
+      } else {
+        this.setFlipX(false);
+      }
+
       const speed = Math.sqrt(
         this.body.velocity.x ** 2 + this.body.velocity.y ** 2
       );
@@ -63,7 +69,6 @@ export default class Ennemy2 extends Phaser.Physics.Arcade.Sprite {
         this.setScale(0.125);
       }
 
-      // Tirer
       let firstShootDelay = Phaser.Math.Between(500, 2500);
       // Tirer
       if (this.firstShoot) {
