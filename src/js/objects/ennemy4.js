@@ -99,6 +99,8 @@ export default class Ennemy4 extends Phaser.Physics.Arcade.Sprite {
     explosion.setScale(4);
     explosion.play("explosion");
 
+    this.scene.sound.play("explosionSound", { volume: 0.2 });
+
     setTimeout(() => {
       explosion.destroy();
     }, 200);

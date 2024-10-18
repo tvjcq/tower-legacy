@@ -315,12 +315,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (!this.canShoot) return; // Empêcher de tirer si le délai n'est pas écoulé
 
     // Calculer l'angle entre le joueur et la position de la souris
-    const angle = Phaser.Math.Angle.Between(
-      this.x,
-      this.y,
-      pointer.worldX,
-      pointer.worldY
-    );
+    const angle = this.attackAngle;
 
     // Créer un projectile à la position du joueur
     const projectile = this.playerProjectiles.create(
@@ -401,6 +396,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.rollActive || this.rollCooldownTimer > 0) return; // Empêcher la roulade si déjà en cours ou en cooldown
     console.log("Roulade");
     this.rollActive = true;
+    const pitch = Phaser.Math.FloatBetween(0.8, 1.2); // Générer un pitch aléatoire entre 0.8 et 1.2
+    this.scene.sound.play("rollSound", { volume: 0.1, rate: pitch });
 
     const rollDistance = this.rollDistance;
     const rollDuration = this.rollDuration;
@@ -457,6 +454,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     console.log("Dash");
     this.dashActive = true;
     this.invincible = true; // Rendre le joueur invincible pendant le dash
+
+    const pitch = Phaser.Math.FloatBetween(1.5, 1.8); // Générer un pitch aléatoire entre 1.5 et 1.8
+    this.scene.sound.play("rollSound", { volume: 0.1, rate: pitch });
 
     // Calculer la direction du dash
     const dashDirection = new Phaser.Math.Vector2(
@@ -518,6 +518,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.playerControlsEnabled = false;
     this.setVelocity(0, 0);
     this.scene.cameras.main.shake(100, 0.01);
+    this.scene.sound.stopAll();
     this.scene.sound.play("playerDeath", { volume: 0.2 });
     this.scene.tweens.add({
       targets: this,
@@ -525,6 +526,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       duration: 1000,
       ease: "Cubic.easeInOut",
       onComplete: () => {
+        this.scene.sound.stopAll();
+        this.scene.scene.stop("Interface");
         this.scene.scene.start("GameOverScene");
       },
     });

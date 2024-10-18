@@ -28,6 +28,34 @@ export default class Interface extends Phaser.Scene {
         fill: "#ffffff",
       })
       .setOrigin(0.5);
+
+    // Ajouter la barre de vie du boss
+    this.bossHealthBarContainer = this.add.graphics();
+    this.bossHealthBar = this.add.graphics();
+    this.bossHealthText = this.add
+      .text(
+        this.cameras.main.width / 2,
+        this.cameras.main.height - 60,
+        "Oclaz",
+        {
+          fontSize: "46px",
+          fontFamily: "Riffic",
+          stroke: "#000000",
+          strokeThickness: 5,
+          fill: "#fff",
+        }
+      )
+      .setOrigin(0.5);
+
+    // Initialement, rendre la barre de vie du boss invisible
+    this.bossHealthBarContainer.setVisible(false);
+    this.bossHealthBar.setVisible(false);
+    this.bossHealthText.setVisible(false);
+
+    // Écouter les événements de mise à jour de la santé du boss
+    this.registry.events.on("bossHealthUpdate", this.updateBossHealthBar, this);
+    this.registry.events.on("bossSpawned", this.showBossHealthBar, this);
+    this.registry.events.on("bossDefeated", this.hideBossHealthBar, this);
   }
 
   update() {
@@ -48,6 +76,9 @@ export default class Interface extends Phaser.Scene {
   }
 
   showStageText(stage, callback) {
+    setTimeout(() => {
+      this.sound.play("bellSound", { volume: 0.2 });
+    }, 2000);
     const stageText = this.add
       .text(
         this.cameras.main.centerX,
@@ -114,5 +145,34 @@ export default class Interface extends Phaser.Scene {
         });
       },
     });
+  }
+
+  updateBossHealthBar(health) {
+    // Mettre à jour la barre de vie du boss
+    const barWidth = 500;
+    const barHeight = 20;
+    const x = (this.cameras.main.width - barWidth) / 2;
+    const y = this.cameras.main.height - 30;
+
+    this.bossHealthBar.clear();
+    this.bossHealthBar.fillStyle(0xb8001f);
+    this.bossHealthBar.fillRect(x, y, health, barHeight);
+
+    // Dessiner le contour de la barre de santé
+    this.bossHealthBar.lineStyle(5, 0x000000);
+    this.bossHealthBar.strokeRect(x, y, barWidth, barHeight);
+  }
+
+  showBossHealthBar() {
+    this.bossHealthBarContainer.setVisible(true);
+    this.bossHealthBar.setVisible(true);
+    this.bossHealthText.setVisible(true);
+    this.updateBossHealthBar(500);
+  }
+
+  hideBossHealthBar() {
+    this.bossHealthBarContainer.setVisible(false);
+    this.bossHealthBar.setVisible(false);
+    this.bossHealthText.setVisible(false);
   }
 }

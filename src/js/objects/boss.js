@@ -14,7 +14,7 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
     this.setScale(1, 0.5); // ! À CHANGER
 
     this.damage = 2;
-    this.health = 7;
+    this.health = 500;
 
     this.attackDelay = 2000;
     this.attacking = false;
@@ -24,6 +24,8 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
 
     // Démarrer l'attaque après un délai initial
     this.scheduleNextAttack();
+
+    this.scene.registry.events.emit("bossSpawned");
   }
 
   update(player) {}
@@ -44,15 +46,133 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
 
   chooseRandomAttack(player) {
     console.log("chooseRandomAttack");
-    const attacks = [
-      // ! Penser à décommenter les attaques
-      this.attack1,
-      this.attack2,
-      this.attack3,
-      // this.attack4
-    ];
+    const attacks = [this.attack1, this.attack2, this.attack3, this.attack4];
     const randomAttack = Phaser.Math.RND.pick(attacks);
-    randomAttack.call(this, player);
+    this.scene.sound.play("bossAttackSound", { volume: 0.1 }); // Son d'attaque du boss
+    switch (randomAttack) {
+      case this.attack1:
+        const originalTexture = this.texture.key;
+        const alternateTexture = "bossAttack1"; // Remplacez par la texture souhaitée
+        const textureChangeInterval = 200; // Intervalle de changement de texture en millisecondes
+        const textureChangeCount = 5; // Nombre de changements de texture
+
+        let changeCount = 0;
+        const changeTexture = () => {
+          if (changeCount >= textureChangeCount) {
+            this.setTexture(originalTexture); // Remettre la texture originale
+            randomAttack.call(this, player); // Lancer l'attaque après les changements de texture
+            return;
+          }
+
+          this.setTexture(
+            this.texture.key === originalTexture
+              ? alternateTexture
+              : originalTexture
+          );
+          changeCount++;
+          this.scene.time.delayedCall(
+            textureChangeInterval,
+            changeTexture,
+            [],
+            this
+          );
+        };
+
+        changeTexture();
+        break;
+      case this.attack2:
+        const originalTexture1 = this.texture.key;
+        const alternateTexture1 = "bossAttack2"; // Remplacez par la texture souhaitée
+        const textureChangeInterval1 = 200; // Intervalle de changement de texture en millisecondes
+        const textureChangeCount1 = 5; // Nombre de changements de texture
+
+        let changeCount1 = 0;
+        const changeTexture1 = () => {
+          if (changeCount1 >= textureChangeCount1) {
+            this.setTexture(originalTexture1); // Remettre la texture originale
+            randomAttack.call(this, player); // Lancer l'attaque après les changements de texture
+            return;
+          }
+
+          this.setTexture(
+            this.texture.key === originalTexture1
+              ? alternateTexture1
+              : originalTexture1
+          );
+          changeCount1++;
+          this.scene.time.delayedCall(
+            textureChangeInterval1,
+            changeTexture1,
+            [],
+            this
+          );
+        };
+
+        changeTexture1();
+        break;
+      case this.attack3:
+        const originalTexture2 = this.texture.key;
+        const alternateTexture2 = "bossAttack3"; // Remplacez par la texture souhaitée
+        const textureChangeInterval2 = 200; // Intervalle de changement de texture en millisecondes
+        const textureChangeCount2 = 5; // Nombre de changements de texture
+
+        let changeCount2 = 0;
+        const changeTexture2 = () => {
+          if (changeCount2 >= textureChangeCount2) {
+            this.setTexture(originalTexture2); // Remettre la texture originale
+            randomAttack.call(this, player); // Lancer l'attaque après les changements de texture
+            return;
+          }
+
+          this.setTexture(
+            this.texture.key === originalTexture2
+              ? alternateTexture2
+              : originalTexture2
+          );
+          changeCount2++;
+          this.scene.time.delayedCall(
+            textureChangeInterval2,
+            changeTexture2,
+            [],
+            this
+          );
+        };
+
+        changeTexture2();
+        break;
+      case this.attack4:
+        const originalTexture3 = this.texture.key;
+        const alternateTexture3 = "bossAttack4"; // Remplacez par la texture souhaitée
+        const textureChangeInterval3 = 200; // Intervalle de changement de texture en millisecondes
+        const textureChangeCount3 = 5; // Nombre de changements de texture
+
+        let changeCount3 = 0;
+        const changeTexture3 = () => {
+          if (changeCount3 >= textureChangeCount3) {
+            this.setTexture(originalTexture3); // Remettre la texture originale
+            randomAttack.call(this, player); // Lancer l'attaque après les changements de texture
+            return;
+          }
+
+          this.setTexture(
+            this.texture.key === originalTexture3
+              ? alternateTexture3
+              : originalTexture3
+          );
+          changeCount3++;
+          this.scene.time.delayedCall(
+            textureChangeInterval3,
+            changeTexture3,
+            [],
+            this
+          );
+        };
+
+        changeTexture3();
+        break;
+    }
+
+    setTimeout(() => randomAttack.call(this, player), 1000);
   }
 
   attack1(player) {
@@ -69,17 +189,17 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
     // Tableau des classes d'ennemis disponibles
     const enemyClasses = [Ennemy1, Ennemy2, Ennemy3, Ennemy4, Ennemy5];
     const ennemyTexture = [
-      "ennemy1",
-      "ennemy2",
-      "ennemy3",
-      "ennemy4",
-      "ennemy5",
+      "ennemy1Earth",
+      "ennemy2Earth",
+      "ennemy3Earth",
+      "ennemy4Earth",
+      "ennemy5Earth",
     ];
 
     // Générer un nombre aléatoire d'ennemis entre 3 et 6
     const numEnemies = Phaser.Math.Between(3, 6);
-    const minDistance = 250; // Distance minimale en pixels
-    const maxDistance = 350; // Distance maximale en pixels
+    const minDistance = 450; // Distance minimale en pixels
+    const maxDistance = 650; // Distance maximale en pixels
 
     // Obtenir les dimensions de la carte
     const mapWidth = this.scene.physics.world.bounds.width;
@@ -126,10 +246,9 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
   attack3(player) {
     console.log("attack3");
     this.attacking = true;
-    // TODO : Attaque de vent avec des tornades (zone ronde un peu partout, font des dégats sur la durée et se dirige vers le joueur lentement)
 
     const numTornados = Phaser.Math.Between(3, 5); // Nombre aléatoire de tornades
-    const tornadoSpeed = 50; // Vitesse de la tornade
+    const tornadoSpeed = 150; // Vitesse de la tornade
     const tornadoDamage = 1; // Dégâts infligés par la tornade
     const tornadoDuration = 5000; // Durée de vie des tornades (5 secondes)
     const tornados = []; // Tableau pour stocker les tornades
@@ -138,7 +257,7 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
     for (let i = 0; i < numTornados; i++) {
       // Position aléatoire autour du joueur
       const angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
-      const distance = Phaser.Math.Between(200, 300); // Distance initiale de la tornade
+      const distance = Phaser.Math.Between(600, 900); // Distance initiale de la tornade
       const tornadoX = player.x + Math.cos(angle) * distance;
       const tornadoY = player.y + Math.sin(angle) * distance;
 
@@ -148,10 +267,18 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
         tornadoY,
         "tornado"
       );
-      tornado.setScale(0.1); // ! Ajuster l'échelle de la tornade
+      tornado.setScale(0.25); // ! Ajuster l'échelle de la tornade
+      tornado.setSize(250, 250); // Ajuster la taille de la zone de collision
       tornado.setAlpha(0.8); // Légèrement transparent pour un effet visuel
       tornados.push(tornado); // Ajouter la tornade au tableau
 
+      // Faire tourner les tornades
+      this.scene.tweens.add({
+        targets: tornado,
+        angle: 360,
+        duration: 2000,
+        repeat: -1, // Rotation continue
+      });
       // Gérer les dégâts de la tornade si elle touche le joueur
       const damageLoop = this.scene.time.addEvent({
         delay: 500, // Les dégâts sont infligés toutes les 0.5 secondes si le joueur est à l'intérieur
@@ -194,10 +321,65 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
   attack4(player) {
     console.log("attack4");
     this.attacking = true;
-    // TODO : Attaque d'eau, geysers qui sortent du sol et font des dégats d'un seul coup (un peu comme l'explosion de l'ennemi 4)
-    // Implémentez l'attaque 4 ici
-    // Simuler la fin de l'attaque après un délai
-    this.scene.time.delayedCall(1000, () => {
+
+    const numGeysers = Phaser.Math.Between(5, 8); // Nombre aléatoire de geysers
+    const warningDuration = 2000; // Durée pendant laquelle l'image clignote (1 seconde)
+    const explosionDuration = 500; // Durée de l'animation d'explosion
+    const explosionDamage = 3; // Dégâts de l'explosion
+    const geysers = []; // Tableau pour stocker les geysers
+
+    // Créer plusieurs geysers
+    for (let i = 0; i < numGeysers; i++) {
+      // Générer une position aléatoire autour du joueur
+      const geyserX = Phaser.Math.Between(player.x - 400, player.x + 400);
+      const geyserY = Phaser.Math.Between(player.y - 400, player.y + 400);
+
+      // Ajouter une image de pré-attaque clignotante (ex : un cercle)
+      const warning = this.scene.add.sprite(geyserX, geyserY, "warningImage");
+      warning.setScale(0.3); // Ajuster l'échelle de l'image
+      warning.setAlpha(0.5); // Semi-transparent
+      this.scene.tweens.add({
+        targets: warning,
+        alpha: { from: 0.5, to: 1 },
+        duration: 200,
+        yoyo: true,
+        repeat: -1, // Clignotement
+      });
+
+      // Après un délai, remplacer l'image clignotante par une explosion
+      this.scene.time.delayedCall(warningDuration, () => {
+        warning.destroy(); // Supprimer l'image de pré-attaque
+
+        // Créer une explosion à la place
+        const explosion = this.scene.add.sprite(
+          geyserX,
+          geyserY,
+          "explosionWater"
+        );
+        explosion.setScale(1); // Ajuster l'échelle de l'explosion
+        explosion.play("explosionWater"); // Jouer l'animation d'explosion
+
+        // Gérer les dégâts si le joueur est à proximité
+        const explosionArea = this.scene.physics.add.sprite(
+          geyserX - 50,
+          geyserY - 70
+        );
+        explosionArea.setCircle(75); // Ajuster la zone d'effet de l'explosion
+
+        this.scene.physics.add.overlap(explosionArea, player, () => {
+          player.takeDamage(explosionDamage);
+        });
+
+        // Détruire l'explosion après l'animation
+        this.scene.time.delayedCall(explosionDuration, () => {
+          explosion.destroy();
+          explosionArea.destroy(); // Supprimer la zone d'explosion
+        });
+      });
+    }
+
+    // Fin de l'attaque après un délai
+    this.scene.time.delayedCall(2000, () => {
       this.attacking = false;
     });
   }
@@ -209,9 +391,9 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
 
     // Définir les positions possibles des murs (ajustez les valeurs selon la largeur de la salle)
     const wallPositions = [
-      this.scene.scale.width * 0.17,
-      this.scene.scale.width * 0.5,
-      this.scene.scale.width * 0.83,
+      12500, // Gauche
+      13000, // Centre
+      13550, // Droite
     ];
 
     let previousPosition = null;
@@ -236,10 +418,10 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
       // Créer le mur
       const wall = this.scene.physics.add.sprite(
         randomPosition,
-        100,
+        1234,
         "fireWall"
       ); // Positionner le mur au-dessus de la carte
-      wall.setScale(1.1, 0.5); // Ajustez l'échelle pour que le mur soit plus large et moins haut
+      wall.setScale(1.25, 1); // Ajustez l'échelle pour que le mur soit plus large et moins haut
       wall.setVelocityY(200); // Ajustez la vitesse de descente du mur
       wall.setSize(wall.width, 50, true);
       wall.setOffset(0, wall.height - 50); // Ajustez l'offset pour que la collision se fasse au bas du mur
@@ -270,7 +452,38 @@ export default class Boss extends Phaser.Physics.Arcade.Sprite {
     spawnWall();
   }
 
+  takeDamage(damage) {
+    this.health -= damage;
+    if (this.health <= 0) {
+      this.dead();
+      this.scene.registry.events.emit("bosDeafeated");
+    }
+    this.scene.registry.events.emit("bossHealthUpdate", this.health);
+  }
+
   dead() {
-    this.destroy();
+    // Faire trembler le boss
+    this.scene.tweens.add({
+      targets: this,
+      x: this.x + 80,
+      yoyo: true,
+      repeat: 10,
+      duration: 50,
+      onComplete: () => {
+        // Réduire l'échelle du boss à 0
+        this.scene.tweens.add({
+          targets: this,
+          scaleX: 0,
+          scaleY: 0,
+          duration: 1000,
+          onComplete: () => {
+            // Lancer la scène de victoire
+            this.scene.sound.stopAll();
+            this.scene.scene.stop("Interface");
+            this.scene.scene.start("VictoryScene");
+          },
+        });
+      },
+    });
   }
 }

@@ -17,6 +17,7 @@ export default class Level extends Phaser.Scene {
     this.load.image("attackSprite", "src/assets/attackSprite.png");
     this.load.image("wandBullet", "src/assets/wandBullet.png");
     this.load.image("dashSprite", "src/assets/dashSprite.png");
+    this.load.image("wand", "src/assets/wand.png");
     this.load.image("ennemy1Fire", "src/assets/ennemy1Fire.png");
     this.load.image("ennemy1Water", "src/assets/ennemy1Water.png");
     this.load.image("ennemy1Earth", "src/assets/ennemy1Earth.png");
@@ -47,6 +48,11 @@ export default class Level extends Phaser.Scene {
       frameWidth: 65,
       frameHeight: 65,
     });
+    this.load.spritesheet("explosionWater", "src/assets/explosionWater.png", {
+      frameWidth: 142,
+      frameHeight: 138,
+    });
+
     this.load.spritesheet("blood", "src/assets/bloodAnim.png", {
       frameWidth: 64,
       frameHeight: 64,
@@ -56,8 +62,13 @@ export default class Level extends Phaser.Scene {
     this.load.image("portalEarth", "src/assets/portalEarth.png");
     this.load.image("portalAir", "src/assets/portalAir.png");
     this.load.image("boss", "src/assets/boss.png");
-    this.load.image("fireWall", "src/assets/fireWall.jpeg");
-    this.load.image("tornado", "src/assets/tornado.jpg");
+    this.load.image("bossAttack1", "src/assets/bossAttack1.png");
+    this.load.image("bossAttack2", "src/assets/bossAttack2.png");
+    this.load.image("bossAttack3", "src/assets/bossAttack3.png");
+    this.load.image("bossAttack4", "src/assets/bossAttack4.png");
+    this.load.image("fireWall", "src/assets/fireWall.png");
+    this.load.image("tornado", "src/assets/tornado.png");
+    this.load.image("warningImage", "src/assets/warningImage.png");
     this.load.image("upgrade1", "src/assets/upgrade1.png");
     this.load.image("upgrade2", "src/assets/upgrade2.png");
     this.load.image("upgrade3", "src/assets/upgrade3.png");
@@ -66,8 +77,13 @@ export default class Level extends Phaser.Scene {
     this.load.image("upgrade6", "src/assets/upgrade6.png");
 
     // Charger les sons
+    this.load.audio("battleMusic", "src/assets/battleMusic.mp3");
+    this.load.audio("bossBattleMusic", "src/assets/bossBattleMusic.mp3");
+    this.load.audio("bellSound", "src/assets/bellSound.mp3");
     this.load.audio("playerHurt", "src/assets/playerHurt.mp3");
     this.load.audio("playerDeath", "src/assets/playerDeath.mp3");
+    this.load.audio("rollSound", "src/assets/rollSound.mp3");
+    this.load.audio("bossAttackSound", "src/assets/bossAttackSound.mp3");
     this.load.audio("popSound", "src/assets/popSound.mp3");
     this.load.audio("whoosh1", "src/assets/whooshSound1.mp3");
     this.load.audio("whoosh2", "src/assets/whooshSound2.mp3");
@@ -94,6 +110,7 @@ export default class Level extends Phaser.Scene {
     this.load.audio("hit18", "src/assets/hitSound18.mp3");
     this.load.audio("laserSound", "src/assets/laserSound.mp3");
     this.load.audio("projectileSound", "src/assets/projectileSound.mp3");
+    this.load.audio("explosionSound", "src/assets/explosionSound.mp3");
     this.load.audio("monsterDeath1", "src/assets/monsterDeath1.mp3");
     this.load.audio("monsterDeath2", "src/assets/monsterDeath2.mp3");
     this.load.audio("monsterDeath3", "src/assets/monsterDeath3.mp3");
@@ -114,6 +131,7 @@ export default class Level extends Phaser.Scene {
     // Créer les couches de la carte
     const backgroundLayer = map.createLayer("Background", tileset);
     const groundLayer = map.createLayer("Ground", tileset);
+    const objectsLayer = map.createLayer("Object", tileset);
     const wallsLayer = map.createLayer("Walls", tileset);
 
     wallsLayer.setCollisionByProperty({ collision: true });
@@ -131,21 +149,13 @@ export default class Level extends Phaser.Scene {
 
     this.lastRoomIndex = -1;
 
-    this.rooms.forEach((room) => {
-      const roomRect = this.add.rectangle(
-        room.x + room.width / 2,
-        room.y + room.height / 2,
-        room.width,
-        room.height
-      );
-      roomRect.setStrokeStyle(2, 0x00ff00);
-    });
-
     this.player = new Player(this, 100, 100, "player");
 
     this.firstTP = true;
 
     this.teleportPlayerToRoom();
+
+    this.sound.add("battleMusic", { loop: true, volume: 0.05 }).play();
 
     // Ajouter les collisions entre le joueur et les murs
     this.physics.add.collider(this.player, wallsLayer, () => {
@@ -173,7 +183,6 @@ export default class Level extends Phaser.Scene {
       this
     );
 
-    // this.ennemies.add(new Boss(this, width / 2, 100, "boss"));
     this.projectiles = this.physics.add.group();
     this.explosions = this.add.group();
 
@@ -222,6 +231,16 @@ export default class Level extends Phaser.Scene {
       frameRate: 30,
       repeat: 0,
     });
+
+    this.anims.create({
+      key: "explosionWater",
+      frames: this.anims.generateFrameNumbers("explosionWater", {
+        start: 0,
+        end: 7,
+      }),
+      frameRate: 30,
+      repeat: 0,
+    });
   }
 
   update() {
@@ -238,7 +257,6 @@ export default class Level extends Phaser.Scene {
       this.isWaveActive = false;
     }
 
-    // Vérifier si tous les ennemis de l'étage ont été éliminés
     // Vérifier si tous les ennemis de l'étage ont été éliminés
     if (
       this.isStageActive &&
@@ -354,7 +372,8 @@ export default class Level extends Phaser.Scene {
     );
     if (this.stageIndex >= this.totalStages) {
       console.log("Tous les étages ont été complétés !");
-      return;
+      this.teleportPlayerToSpecialRoom();
+      return; // Ne plus lancer de nouveaux étages
     }
 
     if (!this.isStageActive && this.stageIndex > 0) {
@@ -366,6 +385,9 @@ export default class Level extends Phaser.Scene {
           this.scene.get("Interface").showStageText(this.stageIndex + 1, () => {
             this.startNextWave();
           });
+          setTimeout(() => {
+            this.sound.play("bellSound");
+          }, 1000);
         }, 1000);
       });
     }
@@ -582,6 +604,168 @@ export default class Level extends Phaser.Scene {
     this.ennemies.add(enemy);
   }
 
+  teleportPlayerToSpecialRoom() {
+    const music = this.sound.get("battleMusic");
+    if (music) {
+      this.tweens.add({
+        targets: music,
+        volume: 0,
+        duration: 2000, // Durée du fondu en millisecondes
+        onComplete: () => {
+          music.stop();
+        },
+      });
+    }
+    this.player.setVelocity(0, 0);
+    this.player.playerControlsEnabled = false;
+
+    // Ajouter le bâton en haut de la salle spéciale
+    const wand = this.add.sprite(12799, 6200, "wand");
+    wand.setScale(0.1);
+
+    this.physics.add.existing(wand);
+    wand.body.setAllowGravity(false);
+
+    // Ajouter une zone de détection pour le bâton
+    this.physics.add.overlap(this.player, wand, () => {
+      // Afficher le texte indiquant que le bâton a été ramassé
+      const text = this.add.text(
+        this.player.x - this.player.width / 4,
+        this.player.y - 150,
+        "Bâton ramassé !",
+        {
+          fontSize: "32px",
+          fontFamily: "Riffic",
+          stroke: "#000000",
+          strokeThickness: 5,
+          fill: "#ffffff",
+        }
+      );
+      this.time.delayedCall(2000, () => {
+        text.destroy();
+      });
+
+      // Détruire le bâton
+      wand.destroy();
+
+      // Téléporter le joueur à la salle du boss
+      this.teleportPlayerToBossRoom();
+
+      this.player.wandTaked = true;
+    });
+
+    // Animation de disparition du joueur
+    this.tweens.add({
+      targets: this.player,
+      scale: { from: 0.2, to: 0 }, // Le joueur rétrécit de sa taille normale à 0
+      ease: "Back.easeIn", // Effet ressort
+      duration: 500, // Durée de l'effet de disparition
+      onComplete: () => {
+        console.log("Téléportation du joueur à la salle spéciale");
+        setTimeout(() => {
+          this.player.setPosition(12799, 7872);
+          this.cameras.main.setScroll(
+            this.player.x - this.cameras.main.width / 2,
+            this.player.y - this.cameras.main.height / 2
+          );
+          setTimeout(() => {
+            // Faire apparaître le joueur avec un effet ressort
+            this.sound.play("popSound");
+            this.tweens.add({
+              targets: this.player,
+              scale: { from: 0, to: 0.2 }, // Le joueur grandit de 0 à sa taille normale
+              alpha: 1, // Le joueur devient visible (fondu)
+              ease: "Back.easeOut", // Effet ressort
+              duration: 250, // Durée de l'animation (1 seconde)
+              onComplete: () => {
+                // Retour de la caméra au zoom normal après l'animation du joueur
+                this.cameras.main.zoomTo(1, 500, "Cubic.easeInOut"); // Retour au zoom x1 en 0,5 seconde avec un effet ease in out
+
+                // Réactiver les contrôles après l'animation complète
+                this.player.playerControlsEnabled = true;
+              },
+            });
+          }, 500);
+        }, 500);
+      },
+    });
+  }
+
+  teleportPlayerToBossRoom() {
+    const music = this.sound.get("battleMusic");
+    if (music) {
+      this.tweens.add({
+        targets: music,
+        volume: 0,
+        duration: 2000, // Durée du fondu en millisecondes
+        onComplete: () => {
+          music.stop();
+        },
+      });
+    }
+    this.player.setVelocity(0, 0);
+    this.player.playerControlsEnabled = false;
+
+    // Animation de disparition du joueur
+    this.tweens.add({
+      targets: this.player,
+      scale: { from: 0.2, to: 0 }, // Le joueur rétrécit de sa taille normale à 0
+      ease: "Back.easeIn", // Effet ressort
+      duration: 500, // Durée de l'effet de disparition
+      onComplete: () => {
+        console.log("Téléportation du joueur à la salle spéciale");
+        setTimeout(() => {
+          this.player.setPosition(12992, 2368); // ! Changer les coordonnées
+          this.cameras.main.setScroll(
+            this.player.x - this.cameras.main.width / 2,
+            this.player.y - this.cameras.main.height / 2
+          );
+          setTimeout(() => {
+            // Faire apparaître le joueur avec un effet ressort
+            this.sound.play("popSound");
+            this.tweens.add({
+              targets: this.player,
+              scale: { from: 0, to: 0.2 }, // Le joueur grandit de 0 à sa taille normale
+              alpha: 1, // Le joueur devient visible (fondu)
+              ease: "Back.easeOut", // Effet ressort
+              duration: 250, // Durée de l'animation (1 seconde)
+              onComplete: () => {
+                // Retour de la caméra au zoom normal après l'animation du joueur
+                this.cameras.main.zoomTo(0.8, 500, "Cubic.easeInOut"); // Retour au zoom x1 en 0,5 seconde avec un effet ease in out
+
+                // Réactiver les contrôles après l'animation complète
+                this.player.playerControlsEnabled = true;
+                this.textureName = "Earth";
+
+                // Faire apparaître le boss après 2 secondes
+                this.time.delayedCall(2000, () => {
+                  const boss = new Boss(this, 12992, 1024, "boss");
+                  this.ennemies.add(boss);
+
+                  // Animation d'apparition du boss
+                  boss.setScale(0);
+                  this.tweens.add({
+                    targets: boss,
+                    scale: { from: 0, to: 1 }, // Le boss grandit de 0 à sa taille normale
+                    alpha: 1, // Le boss devient visible (fondu)
+                    ease: "Back.easeOut", // Effet ressort
+                    duration: 500, // Durée de l'animation (0.5 seconde)
+                    onComplete: () => {
+                      this.sound.play("bossBattleMusic", {
+                        loop: true,
+                        volume: 0.1,
+                      });
+                    },
+                  });
+                });
+              },
+            });
+          }, 500);
+        }, 500);
+      },
+    });
+  }
+
   physicsOverlapCirc(x, y, radius, callback) {
     const objects = this.physics.overlapCirc(x, y, radius);
     objects.forEach((object) => {
@@ -591,7 +775,11 @@ export default class Level extends Phaser.Scene {
 
   handleProjectileCollision(projectile, ennemy) {
     // Infliger des dégâts à l'ennemi
-    ennemy.health -= projectile.damage;
+    if (ennemy instanceof Boss) {
+      ennemy.takeDamage(projectile.damage);
+    } else {
+      ennemy.health -= projectile.damage;
+    }
     console.log(`Dégâts infligés à l'ennemi : ${projectile.damage}`);
 
     // Détruire le projectile
