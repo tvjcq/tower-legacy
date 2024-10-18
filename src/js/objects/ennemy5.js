@@ -204,12 +204,6 @@ export default class Enemy5 extends Phaser.Physics.Arcade.Sprite {
 
     const laserPolygon = new Phaser.Geom.Polygon(points);
 
-    // Dessiner le polygone de collision pour le débogage
-    const debugGraphics = this.scene.add.graphics({
-      lineStyle: { width: 2, color: 0x00ff00 },
-    });
-    debugGraphics.strokePoints(points, true);
-
     // Convertir le rectangle du joueur en polygone
     const playerBounds = player.getBounds();
     const playerPoints = [
@@ -245,7 +239,6 @@ export default class Enemy5 extends Phaser.Physics.Arcade.Sprite {
     // Supprimer le laser et le polygone de débogage après 500ms
     this.scene.time.delayedCall(500, () => {
       laser.destroy();
-      debugGraphics.destroy();
       this.canMove = true;
     });
   }
